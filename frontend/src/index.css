@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", serif;
+  --font-mono: "IBM Plex Mono", monospace;
+
+  --color-primary: #0f172a;
+  --color-secondary: #2563eb;
+  --color-accent: #38bdf8;
+  --color-background: #f8fafc;
+  --color-surface-low: #f1f5f9;
+  --color-surface-high: #ffffff;
+  --color-outline: #e2e8f0;
+  --color-on-surface: #1e293b;
+  --color-on-surface-variant: #64748b;
+  --color-error: #ef4444;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-on-surface font-sans;
+  }
+}
+
+@keyframes bounce-delay {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1.0); }
+}
+
+.animate-bounce-delay {
+  animation: bounce-delay 1.4s infinite ease-in-out both;
+}

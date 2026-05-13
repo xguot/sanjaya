@@ -1,0 +1,48 @@
+# [NODE] Dependency artifacts and build output
+node_modules/
+dist/
+dist-ssr/
+*.local
+.npm
+.eslintcache
+
+# [PYTHON] Virtual environments and bytecode
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+
+# [SCRAPY] Scrapy artifacts and temporary data
+.scrapy/
+data/
+*.csv
+*.json
+*.zip
+*.txt
+!README.md
+
+# [PLAYWRIGHT] Playwright browser binaries and logs
+pw-browsers/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# [OS] System-specific metadata
+.DS_Store
+Thumbs.db
+
+# [IDE] Workspace configurations
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# [ENV] Sensitive credentials
+.env
+.env.*
+!.env.example
