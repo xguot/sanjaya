@@ -91,6 +91,9 @@ export default function App() {
     setError(null);
     setJob({ job_id: '', status: 'queued' });
     
+    // Redirect to extraction monitor immediately
+    setCurrentView(View.Extraction);
+    
     try {
       const res = await fetch(`${API_BASE}/scrape/urls`, {
         method: 'POST',
@@ -104,6 +107,7 @@ export default function App() {
     } catch (e: any) {
       setError(e.message);
       setIsExtracting(false);
+      setCurrentView(View.Discovery); // Fallback if init fails
     }
   };
 
@@ -182,6 +186,7 @@ export default function App() {
                   keyword={keyword}
                   setKeyword={setKeyword}
                   isSearching={isSearching}
+                  isExtracting={isExtracting}
                   results={discoveryResults}
                   selectedUrls={selectedUrls}
                   onSearch={searchOpenAlex}
@@ -235,7 +240,7 @@ function NavItem({ active, icon, label, onClick }: { active: boolean, icon: Reac
 
 // --- View Components ---
 
-function DiscoveryView({ keyword, setKeyword, isSearching, results, selectedUrls, onSearch, onToggle, onSelectAll, onClear, onExtract }: any) {
+function DiscoveryView({ keyword, setKeyword, isSearching, isExtracting, results, selectedUrls, onSearch, onToggle, onSelectAll, onClear, onExtract }: any) {
   return (
     <div className="max-w-5xl relative">
       <div className="mb-12">
@@ -307,10 +312,15 @@ function DiscoveryView({ keyword, setKeyword, isSearching, results, selectedUrls
             <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-bottom-8 duration-300">
               <button 
                 onClick={onExtract}
-                className="bg-secondary text-white px-8 py-4 rounded-full font-bold shadow-2xl hover:bg-blue-700 transition-all flex items-center gap-3 ring-4 ring-white"
+                disabled={isExtracting}
+                className="bg-secondary text-white px-8 py-4 rounded-full font-bold shadow-2xl hover:bg-blue-700 transition-all flex items-center gap-3 ring-4 ring-white disabled:opacity-70"
               >
-                <Play size={18} fill="currentColor" />
-                Extract Selected Papers ({selectedUrls.size})
+                {isExtracting ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <Play size={18} fill="currentColor" />
+                )}
+                {isExtracting ? 'Initializing Engine...' : `Extract Selected Papers (${selectedUrls.size})`}
               </button>
             </div>
           )}
