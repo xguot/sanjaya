@@ -478,13 +478,13 @@ function ExportCard({ icon, title, format, desc, href, recommended }: any) {
       href={href}
       download
       className={`relative p-8 border rounded-2xl flex flex-col h-full bg-white transition-all group ${
-        href === '#' ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-2xl hover:border-secondary shadow-sm'
+        href === '#' ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-xl hover:border-secondary shadow-sm'
       } ${recommended ? 'ring-2 ring-secondary ring-offset-4 ring-offset-background' : 'border-outline'}`}
     >
       {recommended && (
         <span className="absolute -top-3 left-8 px-2 py-1 bg-secondary text-white text-[8px] font-mono font-bold uppercase tracking-widest rounded shadow-lg">Recommended</span>
       )}
-      <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-6 ${recommended ? 'bg-secondary text-white' : 'bg-surface-low text-secondary'}`}>
+      <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-6 ${recommended ? 'bg-secondary text-white' : 'bg-blue-50 text-secondary'}`}>
         {icon}
       </div>
       <h4 className="text-xl font-serif font-bold text-primary mb-1">{title}</h4>
@@ -492,8 +492,8 @@ function ExportCard({ icon, title, format, desc, href, recommended }: any) {
       <p className="text-sm text-on-surface-variant mb-8 flex-1 leading-relaxed">{desc}</p>
       <div className={`w-full py-4 rounded-xl font-mono text-xs uppercase tracking-widest font-bold border transition-all flex items-center justify-center gap-3 ${
         recommended 
-          ? 'bg-primary text-white border-primary group-hover:bg-black' 
-          : 'bg-white text-on-surface-variant border-outline group-hover:border-primary group-hover:text-primary'
+          ? 'bg-secondary text-white border-secondary hover:bg-blue-700' 
+          : 'bg-white text-secondary border-blue-200 hover:bg-blue-50'
       }`}>
         <Download size={16} />
         Download Artifact
