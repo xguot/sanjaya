@@ -121,6 +121,9 @@ async def get_job_status(job_id: str):
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     
+    # Ensure job_id is included in the response
+    job_response = {**job, "job_id": job_id}
+    
     # Add a preview if completed
     if job["status"] == "completed":
         csv_path = os.path.join(DATA_DIR, f"{job_id}.csv")
@@ -135,9 +138,9 @@ async def get_job_status(job_id: str):
                         preview.append(row)
             except Exception as e:
                 print(f"Error reading preview: {e}")
-        job["preview"] = preview
+        job_response["preview"] = preview
         
-    return job
+    return job_response
 
 @app.get("/api/download/{job_id}")
 async def download_file(job_id: str, format: str = "csv"):

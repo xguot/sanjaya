@@ -87,6 +87,9 @@ export default function App() {
       return;
     }
 
+    // Sync URLs to input field for persistence in the Extraction view
+    setInputUrls(urls.join('\n'));
+
     setIsExtracting(true);
     setError(null);
     setJob({ job_id: '', status: 'queued' });
@@ -406,6 +409,7 @@ function ExtractionView({ inputUrls, setInputUrls, job, isExtracting, onExecute 
 
 function ExportView({ job }: any) {
   const preview = job?.preview || [];
+  const isReady = job?.status === 'completed';
 
   return (
     <div className="h-full flex flex-col max-w-6xl">
@@ -450,7 +454,9 @@ function ExportView({ job }: any) {
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={3} className="px-6 py-12 text-center text-slate-300 italic font-serif">No data preview available. Execute extraction to generate artifacts.</td>
+                  <td colSpan={3} className="px-6 py-12 text-center text-slate-300 italic font-serif">
+                    {isReady ? "No data extracted. The target pages may have been unreachable or empty." : "Awaiting extraction finalization..."}
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -463,14 +469,14 @@ function ExportView({ job }: any) {
             title="Spreadsheet" 
             format=".CSV" 
             desc="Optimized for Excel and R statistical ingestion." 
-            href={job?.job_id ? `${API_BASE}/download/${job.job_id}?format=csv` : '#'}
+            href={isReady ? `${API_BASE}/download/${job.job_id}?format=csv` : '#'}
           />
           <ExportCard 
             icon={<Code size={24} />} 
             title="Machine Readable" 
             format=".JSON" 
             desc="Structured data for NLP pipelines and API integration." 
-            href={job?.job_id ? `${API_BASE}/download/${job.job_id}?format=json` : '#'}
+            href={isReady ? `${API_BASE}/download/${job.job_id}?format=json` : '#'}
             recommended
           />
           <ExportCard 
@@ -478,7 +484,7 @@ function ExportView({ job }: any) {
             title="Full Archive" 
             format=".ZIP" 
             desc="Dataset + Automated Audit Log and Manifest." 
-            href={job?.job_id ? `${API_BASE}/download/${job.job_id}?format=zip` : '#'}
+            href={isReady ? `${API_BASE}/download/${job.job_id}?format=zip` : '#'}
           />
         </div>
       </div>
