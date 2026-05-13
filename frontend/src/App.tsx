@@ -143,20 +143,11 @@ export default function App() {
           <Eye className="text-secondary" size={24} />
           <h1 className="text-2xl font-serif font-bold text-primary">Sanjaya</h1>
         </div>
-        <div className="flex items-center gap-4">
-          <button className="p-2 rounded-full hover:bg-surface-low transition-colors text-on-surface-variant">
-            <UserCircle size={24} />
-          </button>
-          <button className="p-2 rounded-full hover:bg-surface-low transition-colors text-on-surface-variant">
-            <Settings size={24} />
-          </button>
-        </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
         <aside className="w-64 flex-shrink-0 bg-surface-low border-r border-outline flex flex-col p-6 z-20">
           <div className="mb-8 border-b border-outline pb-6">
-            <div className="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center text-white font-serif text-xl mb-4">S</div>
             <h2 className="text-xl font-serif font-semibold text-primary">Control Panel</h2>
             <p className="text-xs font-mono text-on-surface-variant mt-1">System Engine v1.0.4</p>
           </div>
