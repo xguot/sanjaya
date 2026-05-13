@@ -197,6 +197,7 @@ export default function App() {
                   onToggle={toggleUrl}
                   onSelectAll={() => setSelectedUrls(new Set(discoveryResults.map(r => r.url)))}
                   onClear={() => setSelectedUrls(new Set())}
+                  onExtract={() => startExtraction()}
                 />
               )}
               {currentView === View.Extraction && (
@@ -243,9 +244,9 @@ function NavItem({ active, icon, label, onClick }: { active: boolean, icon: Reac
 
 // --- View Components ---
 
-function DiscoveryView({ keyword, setKeyword, isSearching, results, selectedUrls, onSearch, onToggle, onSelectAll, onClear }: any) {
+function DiscoveryView({ keyword, setKeyword, isSearching, results, selectedUrls, onSearch, onToggle, onSelectAll, onClear, onExtract }: any) {
   return (
-    <div className="max-w-5xl">
+    <div className="max-w-5xl relative">
       <div className="mb-12">
         <h2 className="text-4xl font-serif font-bold text-primary mb-4">Academic Graph Search</h2>
         <div className="flex gap-4">
@@ -271,7 +272,7 @@ function DiscoveryView({ keyword, setKeyword, isSearching, results, selectedUrls
       </div>
 
       {results.length > 0 && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
           <div className="flex justify-between items-end mb-6 pb-4 border-b border-outline">
             <div>
               <h3 className="text-xl font-serif font-bold text-primary">Discovered Literature</h3>
@@ -310,6 +311,18 @@ function DiscoveryView({ keyword, setKeyword, isSearching, results, selectedUrls
               </div>
             ))}
           </div>
+
+          {selectedUrls.size > 0 && (
+            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-bottom-8 duration-300">
+              <button 
+                onClick={onExtract}
+                className="bg-secondary text-white px-8 py-4 rounded-full font-bold shadow-2xl hover:bg-blue-700 transition-all flex items-center gap-3 ring-4 ring-white"
+              >
+                <Play size={18} fill="currentColor" />
+                Extract Selected Papers ({selectedUrls.size})
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
