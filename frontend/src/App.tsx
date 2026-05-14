@@ -2,8 +2,6 @@ import { useState, useEffect, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Eye, 
-  UserCircle, 
-  Settings, 
   Search, 
   Terminal, 
   Share, 
@@ -15,13 +13,13 @@ import {
   Play,
   Download,
   CheckCircle2,
-  ExternalLink,
   Loader2,
   Moon,
-  Sun
+  Sun,
+  BookOpen
 } from 'lucide-react';
 
-// [TYPES] Core data structures for academic entities and engine state
+// [TYPES] Core data structures
 interface Paper {
   id: string;
   title: string;
@@ -49,11 +47,10 @@ const API_BASE = 'http://localhost:8000/api';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>(View.TargetScraping);
+  // Default to light mode (false)
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sanjaya-theme');
-      if (saved) return saved === 'dark';
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+      return localStorage.getItem('sanjaya-theme') === 'dark';
     }
     return false;
   });
@@ -67,7 +64,6 @@ export default function App() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // [THEME] Sync system/user preference with DOM
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -78,7 +74,6 @@ export default function App() {
     }
   }, [isDarkMode]);
 
-  // [DISCOVERY] Executes semantic search via OpenAlex API layer
   const searchOpenAlex = async () => {
     if (!keyword.trim()) return;
     setIsSearching(true);
@@ -99,7 +94,6 @@ export default function App() {
     }
   };
 
-  // [ENGINE] Orchestrates Scrapy subprocess execution and job queuing
   const startExtraction = async (targetUrls?: string[]) => {
     const urls = targetUrls || (currentView === View.TargetScraping 
       ? Array.from(selectedUrls) 
@@ -110,14 +104,10 @@ export default function App() {
       return;
     }
 
-    // Sync URLs to input field for persistence in the Extraction view
     setInputUrls(urls.join('\n'));
-
     setIsExtracting(true);
     setError(null);
     setJob({ job_id: '', status: 'queued' });
-    
-    // Redirect to extraction monitor immediately
     setCurrentView(View.Extraction);
     
     try {
@@ -134,11 +124,10 @@ export default function App() {
     } catch (e: any) {
       setError(e.message);
       setIsExtracting(false);
-      setCurrentView(View.TargetScraping); // Fallback if init fails
+      setCurrentView(View.TargetScraping);
     }
   };
 
-  // [ROUTER] Handles long-polling for background task synchronization
   const pollStatus = (id: string) => {
     const interval = setInterval(async () => {
       try {
@@ -168,8 +157,8 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-background">
-      <header className="h-16 flex-shrink-0 bg-white dark:bg-surface-low border-b border-outline px-8 flex items-center justify-between z-30 transition-colors">
+    <div className="flex flex-col h-screen overflow-hidden bg-background text-on-surface">
+      <header className="h-16 flex-shrink-0 bg-white dark:bg-surface-low border-b border-outline px-8 flex items-center justify-between z-30 transition-colors shadow-sm">
         <div className="flex items-center gap-3">
           <Eye className="text-secondary" size={24} />
           <h1 className="text-2xl font-serif font-bold text-primary">Sanjaya</h1>
@@ -178,7 +167,7 @@ export default function App() {
           <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
             <button 
               onClick={() => setCurrentView(View.TargetScraping)}
-              className={`${currentView === View.TargetScraping ? 'text-secondary' : 'text-on-surface-variant hover:text-primary'} transition-colors`}
+              className={`${currentView !== View.Documentation ? 'text-secondary' : 'text-on-surface-variant hover:text-primary'} transition-colors`}
             >
               Dashboard
             </button>
@@ -193,7 +182,6 @@ export default function App() {
           <button 
             onClick={() => setIsDarkMode(!isDarkMode)}
             className="p-2 rounded-xl bg-surface-low dark:bg-surface-high border border-outline hover:border-secondary transition-all text-on-surface-variant hover:text-secondary"
-            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
@@ -216,7 +204,7 @@ export default function App() {
           <button 
             onClick={() => startExtraction()}
             disabled={isExtracting}
-            className="mt-auto w-full bg-primary text-white dark:bg-secondary font-mono text-xs py-3 rounded-sm hover:opacity-90 transition-opacity uppercase tracking-wider font-semibold disabled:opacity-50"
+            className="mt-auto w-full bg-secondary text-white font-mono text-xs py-3 rounded-sm hover:opacity-90 transition-opacity uppercase tracking-wider font-semibold disabled:opacity-50"
           >
             {isExtracting ? 'Engine Active' : 'Initialize Sanjaya'}
           </button>
@@ -296,74 +284,43 @@ function NavItem({ active, icon, label, onClick }: { active: boolean, icon: Reac
 
 function DocumentationView() {
   return (
-    <div className="max-w-5xl space-y-12 pb-24">
+    <div className="max-w-4xl space-y-10 pb-20">
       <div>
-        <h2 className="text-4xl font-serif font-bold text-primary mb-4">System Documentation</h2>
-        <p className="text-on-surface-variant text-lg">A researcher's guide to the Sanjaya extraction engine.</p>
+        <h2 className="text-3xl font-serif font-bold text-primary mb-2">Usage Guide</h2>
+        <p className="text-on-surface-variant">Fast tracking for Sanjaya extraction.</p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8">
-        <section className="space-y-4 p-8 bg-surface-low dark:bg-surface-high rounded-2xl border border-outline">
-          <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 text-secondary rounded-xl flex items-center justify-center mb-4">
-            <Search size={24} />
-          </div>
-          <h3 className="text-xl font-serif font-bold text-primary">Target Scraping</h3>
-          <p className="text-sm text-on-surface-variant leading-relaxed">
-            The target scraping layer leverages the <strong>OpenAlex API</strong> to traverse billions of academic entities. 
-            Supports multilingual queries—enter keywords in English or Mandarin (e.g., "抑郁", "睡眠") to retrieve relevant works.
-          </p>
-          <ul className="text-xs space-y-2 text-on-surface-variant list-disc pl-4">
-            <li>Select individual papers or use 'Select All' for bulk extraction.</li>
-            <li>Directly view DOIs and publication metadata before processing.</li>
-            <li>Initiate extraction immediately via the floating CTA bar.</li>
-          </ul>
-        </section>
-
-        <section className="space-y-4 p-8 bg-surface-low dark:bg-surface-high rounded-2xl border border-outline">
-          <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-xl flex items-center justify-center mb-4">
-            <Terminal size={24} />
-          </div>
-          <h3 className="text-xl font-serif font-bold text-primary">Extraction Protocol</h3>
-          <p className="text-sm text-on-surface-variant leading-relaxed">
-            Sanjaya uses a dual-pass extraction strategy to maximize data recovery from diverse academic publishers.
-          </p>
-          <ul className="text-xs space-y-2 text-on-surface-variant list-disc pl-4">
-            <li><strong>Static Pass:</strong> Fast, lightweight HTTP parsing for unprotected repositories.</li>
-            <li><strong>Dynamic Pass:</strong> Automated fallback to <strong>Playwright</strong> headless browsers for JS-heavy sites.</li>
-            <li><strong>Sniper Mode:</strong> Paste custom DOI/URLs directly for targeted extraction.</li>
-          </ul>
-        </section>
+      <div className="grid gap-6">
+        <DocSection icon={<Search />} title="1. Target Scraping">
+          Search via OpenAlex (supports <strong>Mandarin/English</strong>). Select papers and click 'Extract' to begin.
+        </DocSection>
+        <DocSection icon={<Terminal />} title="2. Extraction Protocol">
+          Monitor real-time logs. The engine uses <strong>Scrapy + Playwright</strong> to handle dynamic content automatically.
+        </DocSection>
+        <DocSection icon={<Share />} title="3. Export Artifacts">
+          Download results as <strong>CSV</strong>, <strong>JSON</strong>, or <strong>ZIP</strong> (includes audit log manifest).
+        </DocSection>
       </div>
 
-      <div className="space-y-6">
-        <h3 className="text-2xl font-serif font-bold text-primary">Technical Stack: Python & Playwright</h3>
-        <div className="p-8 border border-outline rounded-2xl space-y-6">
-          <div className="flex items-start gap-4">
-            <div className="p-3 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-lg">
-              <Code size={20} />
-            </div>
-            <div>
-              <h4 className="font-bold text-primary mb-1">Scrapy-Playwright Integration</h4>
-              <p className="text-sm text-on-surface-variant leading-relaxed">
-                The engine is built on <strong>Scrapy</strong>. When a static parse fails, we initialize a 
-                <strong>Chromium</strong> instance via <strong>Playwright</strong> to wait for DOM stabilization and dynamic content rendering.
-              </p>
-            </div>
-          </div>
+      <div className="p-6 border border-outline rounded-xl bg-surface-low dark:bg-surface-high">
+        <h4 className="font-bold text-primary mb-2 flex items-center gap-2">
+          <Code size={16} className="text-secondary" /> Technical Stack
+        </h4>
+        <p className="text-xs text-on-surface-variant leading-relaxed">
+          Powered by Python Scrapy for high-performance crawling and Playwright for Chromium-based dynamic site rendering.
+        </p>
+      </div>
+    </div>
+  );
+}
 
-          <div className="flex items-start gap-4">
-            <div className="p-3 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-lg">
-              <FileText size={20} />
-            </div>
-            <div>
-              <h4 className="font-bold text-primary mb-1">Audit Log & Manifest</h4>
-              <p className="text-sm text-on-surface-variant leading-relaxed">
-                To ensure research reproducibility, every ZIP export includes an automated <strong>manifest.txt</strong>. 
-                This log captures the timestamp, Job ID, and the source URLs used in the session.
-              </p>
-            </div>
-          </div>
-        </div>
+function DocSection({ icon, title, children }: any) {
+  return (
+    <div className="flex gap-4 p-6 border border-outline rounded-xl bg-white dark:bg-surface-low shadow-sm">
+      <div className="text-secondary">{icon}</div>
+      <div>
+        <h4 className="font-bold text-primary mb-1">{title}</h4>
+        <p className="text-sm text-on-surface-variant leading-relaxed">{children}</p>
       </div>
     </div>
   );
@@ -383,7 +340,7 @@ function DiscoveryView({ keyword, setKeyword, isSearching, isExtracting, results
               onChange={(e) => setKeyword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && onSearch()}
               placeholder="Search via OpenAlex (e.g., '抑郁', 'genomic sequencing')..." 
-              className="w-full pl-12 pr-4 py-4 bg-surface-low border border-outline rounded-xl focus:ring-4 focus:ring-secondary/10 focus:border-secondary outline-none transition-all font-mono dark:text-white"
+              className="w-full pl-12 pr-4 py-4 bg-surface-low dark:bg-surface-high border border-outline rounded-xl focus:ring-4 focus:ring-secondary/10 focus:border-secondary outline-none transition-all font-mono text-on-surface placeholder:text-slate-400"
             />
           </div>
           <button 
@@ -427,7 +384,7 @@ function DiscoveryView({ keyword, setKeyword, isSearching, isExtracting, results
                 className={`flex gap-4 p-4 border rounded-xl transition-all cursor-pointer ${
                   selectedUrls.has(paper.url) 
                     ? 'bg-secondary/5 border-secondary' 
-                    : 'bg-white dark:bg-surface-low border-outline hover:border-slate-300 dark:hover:border-slate-500'
+                    : 'bg-white dark:bg-surface-low border-outline hover:border-slate-300 dark:hover:border-slate-500 shadow-sm'
                 }`}
               >
                 <div className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
@@ -452,7 +409,7 @@ function DiscoveryView({ keyword, setKeyword, isSearching, isExtracting, results
               <button 
                 onClick={onExtract}
                 disabled={isExtracting}
-                className="bg-secondary text-white px-8 py-4 rounded-full font-bold shadow-2xl hover:bg-blue-700 transition-all flex items-center gap-3 ring-4 ring-white disabled:opacity-70"
+                className="bg-secondary text-white px-8 py-4 rounded-full font-bold shadow-2xl hover:bg-blue-700 transition-all flex items-center gap-3 ring-4 ring-white dark:ring-surface-low disabled:opacity-70"
               >
                 {isExtracting ? (
                   <Loader2 size={18} className="animate-spin" />
@@ -488,14 +445,14 @@ function ExtractionView({ inputUrls, setInputUrls, job, isExtracting, onExecute 
               value={inputUrls}
               onChange={(e) => setInputUrls(e.target.value)}
               placeholder="Paste URLs or DOIs (one per line)..."
-              className="flex-1 p-6 font-mono text-xs outline-none bg-white dark:bg-surface-low resize-none dark:text-white"
+              className="flex-1 p-6 font-mono text-xs outline-none bg-white dark:bg-surface-low resize-none text-on-surface placeholder:text-slate-400"
             />
-            <div className="p-4 border-t border-outline flex justify-between items-center bg-surface-low/50">
-              <span className="text-[10px] font-mono text-on-surface-variant">{inputUrls.split('\n').filter((u: string) => u.trim()).length} Targets Loaded</span>
+            <div className="p-4 border-t border-outline flex justify-between items-center bg-surface-low/50 dark:bg-slate-900/50">
+              <span className="text-[10px] font-mono text-on-surface-variant">{(inputUrls || '').split('\n').filter((u: string) => u.trim()).length} Targets Loaded</span>
               <button 
                 onClick={onExecute}
                 disabled={isExtracting}
-                className="px-6 py-2.5 bg-slate-900 text-white font-mono text-[10px] font-bold uppercase tracking-widest rounded-lg flex items-center gap-2 hover:bg-black transition-colors disabled:opacity-50"
+                className="px-6 py-2.5 bg-secondary text-white font-mono text-[10px] font-bold uppercase tracking-widest rounded-lg flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {isExtracting ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} fill="currentColor" />}
                 Run Sanjaya
@@ -570,37 +527,39 @@ function ExportView({ job, activeJobId }: any) {
                <Database size={18} className="text-on-surface-variant" />
                Dataset Preview
             </h3>
-            <span className="text-[10px] font-mono text-on-surface-variant bg-white border border-outline px-2 py-1 rounded">Sample Rows</span>
+            <span className="text-[10px] font-mono text-on-surface-variant bg-white dark:bg-surface-high border border-outline px-2 py-1 rounded">Sample Rows</span>
           </div>
-          <table className="w-full">
-            <thead className="bg-slate-50 dark:bg-slate-900 text-[10px] font-mono text-on-surface-variant uppercase tracking-widest border-b border-outline">
-              <tr>
-                <th className="px-6 py-4 text-left border-r border-outline">Reference URL</th>
-                <th className="px-6 py-4 text-left border-r border-outline">Method</th>
-                <th className="px-6 py-4 text-left">Text Fragment</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline">
-              {preview.length > 0 ? preview.map((row: any, i: number) => (
-                <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                  <td className="px-6 py-4 text-[11px] font-mono text-secondary truncate max-w-[200px]">{row.url}</td>
-                  <td className="px-6 py-4">
-                    <span className="bg-slate-100 text-[10px] font-mono px-2 py-0.5 rounded text-primary">{row.extraction_method}</span>
-                  </td>
-                  <td className="px-6 py-4 text-[11px] text-on-surface-variant line-clamp-1">{row.content?.slice(0, 150)}...</td>
-                </tr>
-              )) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50 dark:bg-slate-900 text-[10px] font-mono text-on-surface-variant uppercase tracking-widest border-b border-outline">
                 <tr>
-                  <td colSpan={3} className="px-6 py-12 text-center text-slate-300 italic font-serif">
-                    {isReady ? "No data extracted. The target pages may have been unreachable or empty." : "Awaiting extraction finalization..."}
-                  </td>
+                  <th className="px-6 py-4 text-left border-r border-outline">Reference URL</th>
+                  <th className="px-6 py-4 text-left border-r border-outline">Method</th>
+                  <th className="px-6 py-4 text-left">Text Fragment</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-outline">
+                {preview.length > 0 ? preview.map((row: any, i: number) => (
+                  <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    <td className="px-6 py-4 text-[11px] font-mono text-secondary truncate max-w-[200px]">{row.url}</td>
+                    <td className="px-6 py-4">
+                      <span className="bg-slate-100 dark:bg-surface-high text-[10px] font-mono px-2 py-0.5 rounded text-primary">{row.extraction_method}</span>
+                    </td>
+                    <td className="px-6 py-4 text-[11px] text-on-surface-variant line-clamp-1">{row.content?.slice(0, 150)}...</td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={3} className="px-6 py-12 text-center text-slate-300 italic font-serif">
+                      {isReady ? "No data extracted. The target pages may have been unreachable or empty." : "Awaiting extraction finalization..."}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <ExportCard 
             icon={<FileText size={24} />} 
             title="Spreadsheet" 
@@ -630,12 +589,13 @@ function ExportView({ job, activeJobId }: any) {
 }
 
 function ExportCard({ icon, title, format, desc, href, recommended }: any) {
+  const active = href !== '#';
   return (
     <a 
       href={href}
       download
       className={`relative p-8 border rounded-2xl flex flex-col h-full bg-white dark:bg-surface-low transition-all group ${
-        href === '#' ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-xl hover:border-secondary shadow-sm'
+        !active ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-xl hover:border-secondary shadow-sm'
       } ${recommended ? 'ring-2 ring-secondary ring-offset-4 ring-offset-background dark:ring-offset-surface-low' : 'border-outline'}`}
     >
       {recommended && (
