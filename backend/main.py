@@ -253,4 +253,7 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8000, help="Port to run the server on.")
     args = parser.parse_args()
     
-    uvicorn.run(app, host="0.0.0.0", port=args.port)
+    # Use PORT environment variable if available (for Railway), otherwise use args.port
+    port = int(os.environ.get("PORT", args.port))
+    
+    uvicorn.run(app, host="0.0.0.0", port=port)

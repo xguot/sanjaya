@@ -28,6 +28,7 @@ data/
 *.zip
 *.txt
 !README.md
+!requirements.txt
 
 # [PLAYWRIGHT] Playwright browser binaries and logs
 pw-browsers/
