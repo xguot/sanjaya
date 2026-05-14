@@ -43,7 +43,7 @@ enum View {
   Documentation = 'Documentation'
 }
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = 'http://localhost:8844/api';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>(View.TargetScraping);

@@ -22,7 +22,7 @@ function createWindow() {
   if (!isPackaged) {
     // DEV MODE: Spawn raw python from backend directory
     console.log('App is in Dev Mode. Spawning raw Python script...');
-    pythonProcess = spawn('python', ['main.py'], {
+    pythonProcess = spawn('python', ['main.py', '--port', '8844'], {
       cwd: path.join(__dirname, '../../backend'),
       env: { ...process.env, PYTHONPATH: path.join(__dirname, '../../') }
     });
@@ -34,7 +34,7 @@ function createWindow() {
     console.log('App is Packaged. Spawning compiled binary...');
     const backendPath = path.join(process.resourcesPath, 'sanjaya_api', 'sanjaya_api');
     
-    pythonProcess = spawn(backendPath, [], {
+    pythonProcess = spawn(backendPath, ['--port', '8844'], {
       cwd: path.join(process.resourcesPath, 'sanjaya_api'),
     });
 

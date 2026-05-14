@@ -211,4 +211,10 @@ async def download_file(job_id: str, format: str = "csv"):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Run the Sanjaya API server.")
+    parser.add_argument("--port", type=int, default=8844, help="Port to run the server on.")
+    args = parser.parse_args()
+    
+    uvicorn.run(app, host="0.0.0.0", port=args.port)
