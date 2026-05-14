@@ -16,7 +16,9 @@ import {
   Download,
   CheckCircle2,
   ExternalLink,
-  Loader2
+  Loader2,
+  Moon,
+  Sun
 } from 'lucide-react';
 
 // [TYPES] Core data structures for academic entities and engine state
@@ -47,6 +49,14 @@ const API_BASE = 'http://localhost:8000/api';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>(View.TargetScraping);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sanjaya-theme');
+      if (saved) return saved === 'dark';
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
   const [keyword, setKeyword] = useState('');
   const [discoveryResults, setDiscoveryResults] = useState<Paper[]>([]);
   const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
@@ -56,6 +66,17 @@ export default function App() {
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // [THEME] Sync system/user preference with DOM
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('sanjaya-theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('sanjaya-theme', 'light');
+    }
+  }, [isDarkMode]);
 
   // [DISCOVERY] Executes semantic search via OpenAlex API layer
   const searchOpenAlex = async () => {
@@ -180,7 +201,7 @@ export default function App() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-64 flex-shrink-0 bg-surface-low border-r border-outline flex flex-col p-6 z-20">
+        <aside className="w-64 flex-shrink-0 bg-surface-low dark:bg-slate-950 border-r border-outline flex flex-col p-6 z-20 transition-colors">
           <div className="mb-8 border-b border-outline pb-6">
             <h2 className="text-xl font-serif font-semibold text-primary">Control Panel</h2>
             <p className="text-xs font-mono text-on-surface-variant mt-1">System Engine</p>
@@ -195,13 +216,13 @@ export default function App() {
           <button 
             onClick={() => startExtraction()}
             disabled={isExtracting}
-            className="mt-auto w-full bg-primary text-white font-mono text-xs py-3 rounded-sm hover:opacity-90 transition-opacity uppercase tracking-wider font-semibold disabled:opacity-50"
+            className="mt-auto w-full bg-primary text-white dark:bg-secondary font-mono text-xs py-3 rounded-sm hover:opacity-90 transition-opacity uppercase tracking-wider font-semibold disabled:opacity-50"
           >
             {isExtracting ? 'Engine Active' : 'Initialize Sanjaya'}
           </button>
         </aside>
 
-        <main className="flex-1 overflow-y-auto relative bg-white">
+        <main className="flex-1 overflow-y-auto relative bg-white dark:bg-background transition-colors">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentView}
@@ -362,7 +383,7 @@ function DiscoveryView({ keyword, setKeyword, isSearching, isExtracting, results
               onChange={(e) => setKeyword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && onSearch()}
               placeholder="Search via OpenAlex (e.g., '抑郁', 'genomic sequencing')..." 
-              className="w-full pl-12 pr-4 py-4 bg-surface-low border border-outline rounded-xl focus:ring-4 focus:ring-secondary/10 focus:border-secondary outline-none transition-all font-mono"
+              className="w-full pl-12 pr-4 py-4 bg-surface-low border border-outline rounded-xl focus:ring-4 focus:ring-secondary/10 focus:border-secondary outline-none transition-all font-mono dark:text-white"
             />
           </div>
           <button 
@@ -383,8 +404,18 @@ function DiscoveryView({ keyword, setKeyword, isSearching, isExtracting, results
               <p className="text-xs font-mono text-on-surface-variant mt-1">Found {results.length} results</p>
             </div>
             <div className="flex gap-2">
-              <button onClick={onSelectAll} className="px-3 py-1.5 border border-outline rounded text-[10px] font-mono uppercase bg-white hover:bg-surface-low">Select All</button>
-              <button onClick={onClear} className="px-3 py-1.5 border border-outline rounded text-[10px] font-mono uppercase bg-white hover:bg-surface-low text-error">Clear</button>
+              <button 
+                onClick={onSelectAll} 
+                className="px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-secondary bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors border border-blue-100 dark:border-blue-900/50"
+              >
+                Select All
+              </button>
+              <button 
+                onClick={onClear} 
+                className="px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors border border-red-100 dark:border-red-900/50"
+              >
+                Clear Selection
+              </button>
             </div>
           </div>
 
@@ -396,11 +427,11 @@ function DiscoveryView({ keyword, setKeyword, isSearching, isExtracting, results
                 className={`flex gap-4 p-4 border rounded-xl transition-all cursor-pointer ${
                   selectedUrls.has(paper.url) 
                     ? 'bg-secondary/5 border-secondary' 
-                    : 'bg-white border-outline hover:border-slate-300'
+                    : 'bg-white dark:bg-surface-low border-outline hover:border-slate-300 dark:hover:border-slate-500'
                 }`}
               >
                 <div className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                  selectedUrls.has(paper.url) ? 'bg-secondary border-secondary text-white' : 'bg-white border-outline'
+                  selectedUrls.has(paper.url) ? 'bg-secondary border-secondary text-white' : 'bg-white dark:bg-surface-high border-outline'
                 }`}>
                   {selectedUrls.has(paper.url) && <CheckCircle2 size={14} />}
                 </div>
@@ -448,8 +479,8 @@ function ExtractionView({ inputUrls, setInputUrls, job, isExtracting, onExecute 
 
       <div className="flex-1 grid grid-cols-12 gap-8 overflow-hidden">
         <div className="col-span-5 flex flex-col gap-6">
-          <div className="flex-1 flex flex-col border border-outline rounded-2xl bg-white overflow-hidden shadow-sm">
-            <div className="px-6 py-3 border-b border-outline bg-surface-low flex justify-between items-center">
+          <div className="flex-1 flex flex-col border border-outline rounded-2xl bg-white dark:bg-surface-low overflow-hidden shadow-sm">
+            <div className="px-6 py-3 border-b border-outline bg-surface-low dark:bg-slate-950 flex justify-between items-center">
               <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-widest font-bold">Target Identifiers</span>
               <span className="text-[10px] font-mono text-on-surface-variant">Bulk Mode</span>
             </div>
@@ -457,10 +488,10 @@ function ExtractionView({ inputUrls, setInputUrls, job, isExtracting, onExecute 
               value={inputUrls}
               onChange={(e) => setInputUrls(e.target.value)}
               placeholder="Paste URLs or DOIs (one per line)..."
-              className="flex-1 p-6 font-mono text-xs outline-none bg-white resize-none"
+              className="flex-1 p-6 font-mono text-xs outline-none bg-white dark:bg-surface-low resize-none dark:text-white"
             />
             <div className="p-4 border-t border-outline flex justify-between items-center bg-surface-low/50">
-              <span className="text-[10px] font-mono text-on-surface-variant">{inputUrls.split('\n').filter(u => u.trim()).length} Targets Loaded</span>
+              <span className="text-[10px] font-mono text-on-surface-variant">{inputUrls.split('\n').filter((u: string) => u.trim()).length} Targets Loaded</span>
               <button 
                 onClick={onExecute}
                 disabled={isExtracting}
@@ -533,8 +564,8 @@ function ExportView({ job, activeJobId }: any) {
       </div>
 
       <div className="flex-1 flex flex-col gap-10">
-        <div className="border border-outline rounded-2xl overflow-hidden bg-white shadow-sm">
-          <div className="px-6 py-4 bg-surface-low border-b border-outline flex justify-between items-center">
+        <div className="border border-outline rounded-2xl overflow-hidden bg-white dark:bg-surface-low shadow-sm">
+          <div className="px-6 py-4 bg-surface-low dark:bg-slate-950 border-b border-outline flex justify-between items-center">
             <h3 className="text-lg font-serif font-semibold text-primary flex items-center gap-3">
                <Database size={18} className="text-on-surface-variant" />
                Dataset Preview
@@ -542,7 +573,7 @@ function ExportView({ job, activeJobId }: any) {
             <span className="text-[10px] font-mono text-on-surface-variant bg-white border border-outline px-2 py-1 rounded">Sample Rows</span>
           </div>
           <table className="w-full">
-            <thead className="bg-slate-50 text-[10px] font-mono text-on-surface-variant uppercase tracking-widest border-b border-outline">
+            <thead className="bg-slate-50 dark:bg-slate-900 text-[10px] font-mono text-on-surface-variant uppercase tracking-widest border-b border-outline">
               <tr>
                 <th className="px-6 py-4 text-left border-r border-outline">Reference URL</th>
                 <th className="px-6 py-4 text-left border-r border-outline">Method</th>
@@ -551,7 +582,7 @@ function ExportView({ job, activeJobId }: any) {
             </thead>
             <tbody className="divide-y divide-outline">
               {preview.length > 0 ? preview.map((row: any, i: number) => (
-                <tr key={i} className="hover:bg-slate-50 transition-colors">
+                <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                   <td className="px-6 py-4 text-[11px] font-mono text-secondary truncate max-w-[200px]">{row.url}</td>
                   <td className="px-6 py-4">
                     <span className="bg-slate-100 text-[10px] font-mono px-2 py-0.5 rounded text-primary">{row.extraction_method}</span>
@@ -603,14 +634,14 @@ function ExportCard({ icon, title, format, desc, href, recommended }: any) {
     <a 
       href={href}
       download
-      className={`relative p-8 border rounded-2xl flex flex-col h-full bg-white transition-all group ${
+      className={`relative p-8 border rounded-2xl flex flex-col h-full bg-white dark:bg-surface-low transition-all group ${
         href === '#' ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-xl hover:border-secondary shadow-sm'
-      } ${recommended ? 'ring-2 ring-secondary ring-offset-4 ring-offset-background' : 'border-outline'}`}
+      } ${recommended ? 'ring-2 ring-secondary ring-offset-4 ring-offset-background dark:ring-offset-surface-low' : 'border-outline'}`}
     >
       {recommended && (
         <span className="absolute -top-3 left-8 px-2 py-1 bg-secondary text-white text-[8px] font-mono font-bold uppercase tracking-widest rounded shadow-lg">Recommended</span>
       )}
-      <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-6 ${recommended ? 'bg-secondary text-white' : 'bg-blue-50 text-secondary'}`}>
+      <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-6 ${recommended ? 'bg-secondary text-white shadow-md' : 'bg-blue-50 dark:bg-blue-900/20 text-secondary'}`}>
         {icon}
       </div>
       <h4 className="text-xl font-serif font-bold text-primary mb-1">{title}</h4>
@@ -619,7 +650,7 @@ function ExportCard({ icon, title, format, desc, href, recommended }: any) {
       <div className={`w-full py-4 rounded-xl font-mono text-xs uppercase tracking-widest font-bold border transition-all flex items-center justify-center gap-3 ${
         recommended 
           ? 'bg-secondary text-white border-secondary hover:bg-blue-700' 
-          : 'bg-white text-secondary border-blue-200 hover:bg-blue-50'
+          : 'bg-white dark:bg-surface-high text-secondary border-blue-200 dark:border-blue-900/50 hover:bg-blue-50 dark:hover:bg-blue-900/10'
       }`}>
         <Download size={16} />
         Download Artifact
