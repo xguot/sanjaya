@@ -117,10 +117,20 @@ async def discover_openalex(query: str = Query(..., min_length=1)):
 @app.post("/api/scrape/urls")
 async def scrape_urls(payload: UrlListPayload, background_tasks: BackgroundTasks):
     job_id = str(uuid.uuid4())
-    urls = [url.strip() for url in payload.urls if url.strip()]
+    raw_urls = [url.strip() for url in payload.urls if url.strip()]
+    
+    # Normalize URLs: handle DOIs and ensure protocol
+    urls = []
+    for url in raw_urls:
+        if url.startswith('10.') and '/' in url:
+            urls.append(f"https://doi.org/{url}")
+        elif not url.startswith('http') and ('.' in url or 'localhost' in url):
+            urls.append(f"https://{url}")
+        else:
+            urls.append(url)
     
     if not urls:
-        raise HTTPException(status_code=400, detail="No URLs provided")
+        raise HTTPException(status_code=400, detail="No valid URLs provided")
     
     jobs[job_id] = {
         "status": "queued", 
