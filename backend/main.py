@@ -160,7 +160,10 @@ async def discover_openalex(query: str = Query(..., min_length=1)):
                 raise e
             import traceback
             traceback.print_exc()
-            raise HTTPException(status_code=500, detail=f"Discovery failed: {str(e)}")
+            return JSONResponse(
+                status_code=500, 
+                content={"detail": f"Discovery Engine Error: {str(e)}"}
+            )
 
 @app.post("/api/scrape/urls")
 async def scrape_urls(payload: UrlListPayload, background_tasks: BackgroundTasks):

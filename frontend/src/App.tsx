@@ -86,12 +86,16 @@ export default function App() {
     
     try {
       const res = await fetch(`${API_BASE}/discovery/openalex?query=${encodeURIComponent(keyword)}`);
-      if (!res.ok) throw new Error('Discovery engine failure');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Connection to Backend Failed (Discovery)');
+      }
       const data = await res.json();
       setDiscoveryResults(data.results);
       setSelectedUrls(new Set(data.results.map((r: Paper) => r.url)));
     } catch (e: any) {
-      setError(e.message);
+      console.error('Discovery Fetch Error:', e);
+      setError(e.message === 'Failed to fetch' ? 'Connection to Backend Failed (Engine Offline)' : e.message);
     } finally {
       setIsSearching(false);
     }

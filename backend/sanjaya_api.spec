@@ -23,7 +23,9 @@ hiddenimports = [
     'sanjaya.spiders.sanjaya',
     'crochet',
     'playwright',
-    'scrapy_playwright'
+    'scrapy_playwright',
+    'httpx',
+    'anyio'
 ]
 
 # Collect everything for Scrapy and Scrapy-Playwright
