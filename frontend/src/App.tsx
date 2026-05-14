@@ -45,7 +45,8 @@ enum View {
 }
 
 const RAW_BASE = (import.meta.env.VITE_API_BASE || 'http://localhost:8000').replace(/\/$/, '');
-const API_BASE = RAW_BASE.endsWith('/api') ? RAW_BASE : `${RAW_BASE}/api`;
+const PROTOCOL_BASE = RAW_BASE.startsWith('http') ? RAW_BASE : `https://${RAW_BASE}`;
+const API_BASE = PROTOCOL_BASE.endsWith('/api') ? PROTOCOL_BASE : `${PROTOCOL_BASE}/api`;
 
 console.log('Sanjaya API Base:', API_BASE);
 

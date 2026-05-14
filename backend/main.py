@@ -82,19 +82,25 @@ def run_scrapy_spider(job_id: str, start_urls: List[str]):
     
     try:
         # Start the crawl in a background thread managed by crochet
-        crawl_deferred = run_spider_in_reactor(urls_str, output_file)
+        # EventualResult (returned by run_in_reactor) doesn't have addCallback
+        result = run_spider_in_reactor(urls_str, output_file)
         
-        def update_job_status(success):
-            if success and os.path.exists(output_file) and os.path.getsize(output_file) > 0:
-                jobs[job_id]["status"] = "completed"
-                jobs[job_id]["completed_at"] = datetime.datetime.now().isoformat()
-            else:
+        def check_completion():
+            try:
+                # Wait for the result (blocks until done)
+                result.wait()
+                if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
+                    jobs[job_id]["status"] = "completed"
+                    jobs[job_id]["completed_at"] = datetime.datetime.now().isoformat()
+                else:
+                    jobs[job_id]["status"] = "failed"
+                    jobs[job_id]["error"] = "Extraction failed or produced no results."
+            except Exception as e:
                 jobs[job_id]["status"] = "failed"
-                jobs[job_id]["error"] = "Extraction failed or produced no results."
+                jobs[job_id]["error"] = str(e)
 
-        # Register callbacks for the deferred
-        crawl_deferred.addCallback(lambda _: update_job_status(True))
-        crawl_deferred.addErrback(lambda e: update_job_status(False))
+        import threading
+        threading.Thread(target=check_completion).start()
 
     except Exception as e:
         print(f"Scrapy Dispatch Exception: {e}")
