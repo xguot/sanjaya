@@ -1,5 +1,6 @@
 # 👁️ Sanjaya
-Academic extraction engine for quantitative researchers.
+
+<img width="1279" height="1293" alt="image" src="https://github.com/user-attachments/assets/699b3a78-a6b5-475f-92b2-b1972a9be98d" />
 
 ### Features
 - **Discovery:** Integrated OpenAlex Academic Graph API.
