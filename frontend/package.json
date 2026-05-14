@@ -41,9 +41,7 @@
       "../scrapy.cfg"
     ],
     "mac": {
-      "target": "dmg",
-      "hardenedRuntime": true,
-      "gatekeeperAssess": false
+      "target": "dmg"
     },
     "win": {
       "target": "portable"
