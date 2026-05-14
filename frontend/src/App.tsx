@@ -50,6 +50,7 @@ export default function App() {
   // Default to light mode (false)
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
+      // Default to light mode (false) unless explicitly saved as dark
       return localStorage.getItem('sanjaya-theme') === 'dark';
     }
     return false;
@@ -189,7 +190,7 @@ export default function App() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-64 flex-shrink-0 bg-surface-low dark:bg-slate-950 border-r border-outline flex flex-col p-6 z-20 transition-colors">
+        <aside className="w-64 flex-shrink-0 bg-white dark:bg-slate-950 border-r border-outline flex flex-col p-6 z-20 transition-colors shadow-sm">
           <div className="mb-8 border-b border-outline pb-6">
             <h2 className="text-xl font-serif font-semibold text-primary">Control Panel</h2>
             <p className="text-xs font-mono text-on-surface-variant mt-1">System Engine</p>
@@ -353,6 +354,36 @@ function DiscoveryView({ keyword, setKeyword, isSearching, isExtracting, results
         </div>
       </div>
 
+      {results.length === 0 && !isSearching && (
+        <div className="mt-20 flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in zoom-in duration-500">
+          <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center text-blue-600 text-3xl shadow-inner">
+            🔭
+          </div>
+          <div className="max-w-md space-y-3">
+            <h3 className="text-xl font-serif font-bold text-primary">Ready for Discovery</h3>
+            <p className="text-sm text-on-surface-variant leading-relaxed">
+              Sanjaya is currently querying the <strong>OpenAlex</strong> database. Enter keywords above to find and extract academic papers.
+            </p>
+            <div className="pt-4 border-t border-outline">
+              <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest mb-2">Not in database?</p>
+              <p className="text-xs text-on-surface-variant">
+                If your target paper is not found, switch to the <strong>Extraction</strong> tab and use <strong>Sniper Mode</strong> to paste the DOI or URL directly.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-4 items-center pt-8 opacity-40 grayscale group-hover:grayscale-0 transition-all">
+            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Powered by</span>
+            <div className="flex gap-3 items-center">
+              <span className="text-[11px] font-bold text-slate-600">OpenAlex</span>
+              <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
+              <span className="text-[11px] font-bold text-slate-600">Scrapy</span>
+              <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
+              <span className="text-[11px] font-bold text-slate-600">Playwright</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {results.length > 0 && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
           <div className="flex justify-between items-end mb-6 pb-4 border-b border-outline">
@@ -437,7 +468,7 @@ function ExtractionView({ inputUrls, setInputUrls, job, isExtracting, onExecute 
       <div className="flex-1 grid grid-cols-12 gap-8 overflow-hidden">
         <div className="col-span-5 flex flex-col gap-6">
           <div className="flex-1 flex flex-col border border-outline rounded-2xl bg-white dark:bg-surface-low overflow-hidden shadow-sm">
-            <div className="px-6 py-3 border-b border-outline bg-surface-low dark:bg-slate-950 flex justify-between items-center">
+            <div className="px-6 py-3 border-b border-outline bg-slate-50 dark:bg-slate-950 flex justify-between items-center">
               <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-widest font-bold">Target Identifiers</span>
               <span className="text-[10px] font-mono text-on-surface-variant">Bulk Mode</span>
             </div>
@@ -447,7 +478,7 @@ function ExtractionView({ inputUrls, setInputUrls, job, isExtracting, onExecute 
               placeholder="Paste URLs or DOIs (one per line)..."
               className="flex-1 p-6 font-mono text-xs outline-none bg-white dark:bg-surface-low resize-none text-on-surface placeholder:text-slate-400"
             />
-            <div className="p-4 border-t border-outline flex justify-between items-center bg-surface-low/50 dark:bg-slate-900/50">
+            <div className="p-4 border-t border-outline flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
               <span className="text-[10px] font-mono text-on-surface-variant">{(inputUrls || '').split('\n').filter((u: string) => u.trim()).length} Targets Loaded</span>
               <button 
                 onClick={onExecute}
@@ -461,8 +492,8 @@ function ExtractionView({ inputUrls, setInputUrls, job, isExtracting, onExecute 
           </div>
         </div>
 
-        <div className="col-span-7 bg-primary rounded-2xl border border-outline overflow-hidden shadow-2xl flex flex-col">
-          <div className="px-5 py-3 border-b border-white/5 flex justify-between items-center bg-primary">
+        <div className="col-span-7 bg-slate-900 dark:bg-slate-950 rounded-2xl border border-outline overflow-hidden shadow-2xl flex flex-col">
+          <div className="px-5 py-3 border-b border-white/5 flex justify-between items-center">
              <div className="flex items-center gap-2">
                 <Terminal size={14} className="text-accent" />
                 <span className="text-[10px] font-mono text-accent uppercase tracking-widest font-bold">Engine Kernel Log</span>
@@ -522,7 +553,7 @@ function ExportView({ job, activeJobId }: any) {
 
       <div className="flex-1 flex flex-col gap-10">
         <div className="border border-outline rounded-2xl overflow-hidden bg-white dark:bg-surface-low shadow-sm">
-          <div className="px-6 py-4 bg-surface-low dark:bg-slate-950 border-b border-outline flex justify-between items-center">
+          <div className="px-6 py-4 bg-slate-50 dark:bg-slate-950 border-b border-outline flex justify-between items-center">
             <h3 className="text-lg font-serif font-semibold text-primary flex items-center gap-3">
                <Database size={18} className="text-on-surface-variant" />
                Dataset Preview
@@ -531,7 +562,7 @@ function ExportView({ job, activeJobId }: any) {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-50 dark:bg-slate-900 text-[10px] font-mono text-on-surface-variant uppercase tracking-widest border-b border-outline">
+              <thead className="bg-slate-100 dark:bg-slate-900 text-[10px] font-mono text-slate-500 uppercase tracking-widest border-b border-outline">
                 <tr>
                   <th className="px-6 py-4 text-left border-r border-outline">Reference URL</th>
                   <th className="px-6 py-4 text-left border-r border-outline">Method</th>
