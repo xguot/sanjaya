@@ -2,6 +2,8 @@
   "name": "sanjaya",
   "version": "1.0.0",
   "description": "Sanjaya Academic Extraction Engine",
+  "author": "Sanjaya Data",
+  "repository": "https://github.com/xguot/sanjaya",
   "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
