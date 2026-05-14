@@ -1,3 +1,6 @@
+import crochet
+crochet.setup()
+
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -11,10 +14,11 @@ import zipfile
 import httpx
 import datetime
 import sys
-import multiprocessing
 from typing import List, Optional
-from scrapy.crawler import CrawlerProcess
+from scrapy.crawler import CrawlerRunner
 from scrapy.utils.log import configure_logging
+from scrapy.utils.project import get_project_settings
+from scrapy.settings import Settings
 
 app = FastAPI(title="Sanjaya API")
 
@@ -30,16 +34,22 @@ app.add_middleware(
 # In-memory job store
 jobs = {}
 
-# Ensure data directory exists
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# [ENGINEER CRITICAL] Robust Path Resolution
+def get_resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller."""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
-# [BUNDLING] Fix for PyInstaller _MEIPASS
-if getattr(sys, 'frozen', False):
-    BASE_DIR = sys._MEIPASS
+BASE_DIR = get_resource_path("")
 
 if BASE_DIR not in sys.path:
     sys.path.append(BASE_DIR)
 
+# Import spider after sys.path update
 from sanjaya.spiders.sanjaya import SanjayaSpider
 
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -49,53 +59,57 @@ if not os.path.exists(DATA_DIR):
 class UrlListPayload(BaseModel):
     urls: List[str]
 
-# [ENGINEER CRITICAL] Scrapy Internalization
-def run_spider_internal(urls_str: str, output_file: str):
-    """Worker function to run Scrapy in a separate process."""
-    settings = {
-        'FEED_FORMAT': 'csv',
-        'FEED_URI': output_file,
-        'TWISTED_REACTOR': 'twisted.internet.asyncioreactor.AsyncioSelectorReactor',
-        'DOWNLOAD_HANDLERS': {
-            "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
-            "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
-        },
-        'PLAYWRIGHT_LAUNCH_OPTIONS': {"headless": True},
-        'LOG_LEVEL': 'INFO',
-        'REQUEST_FINGERPRINTER_IMPLEMENTATION': '2.7',
-    }
-    
-    configure_logging(settings)
-    process = CrawlerProcess(settings)
-    process.crawl(SanjayaSpider, start_urls=urls_str)
-    process.start() # This blocks until the spider is finished
+# [ENGINEER CRITICAL] Scrapy execution with Crochet
+def get_sanjaya_settings(output_file: str):
+    """Configures Scrapy settings for the bundled environment."""
+    settings = Settings()
+    # Explicitly point to the bundled settings and spiders
+    settings.set('SPIDER_MODULES', ['sanjaya.spiders'])
+    settings.set('NEWSPIDER_MODULE', 'sanjaya.spiders')
+    settings.set('FEED_FORMAT', 'csv')
+    settings.set('FEED_URI', output_file)
+    settings.set('TWISTED_REACTOR', 'twisted.internet.asyncioreactor.AsyncioSelectorReactor')
+    settings.set('DOWNLOAD_HANDLERS', {
+        "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+        "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+    })
+    settings.set('PLAYWRIGHT_LAUNCH_OPTIONS', {"headless": True}, priority='project')
+    settings.set('LOG_LEVEL', 'INFO')
+    settings.set('REQUEST_FINGERPRINTER_IMPLEMENTATION', '2.7')
+    return settings
+
+@crochet.run_in_reactor
+def run_spider_in_reactor(urls_str: str, output_file: str):
+    """Runs Scrapy spider inside the crochet-managed reactor thread."""
+    settings = get_sanjaya_settings(output_file)
+    runner = CrawlerRunner(settings)
+    return runner.crawl(SanjayaSpider, start_urls=urls_str)
 
 def run_scrapy_spider(job_id: str, start_urls: List[str]):
-    """Executes the Scrapy spider internally using multiprocessing."""
+    """Orchestrates the Scrapy job and monitors completion."""
     jobs[job_id]["status"] = "processing"
     
     urls_str = ",".join(start_urls)
     output_file = os.path.join(DATA_DIR, f"{job_id}.csv")
     
     try:
-        # Use multiprocessing to avoid reactor issues in the main thread
-        p = multiprocessing.Process(target=run_spider_internal, args=(urls_str, output_file))
-        p.start()
-        p.join()
+        # Start the crawl in a background thread managed by crochet
+        crawl_deferred = run_spider_in_reactor(urls_str, output_file)
         
-        if p.exitcode == 0:
-            if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
+        def update_job_status(success):
+            if success and os.path.exists(output_file) and os.path.getsize(output_file) > 0:
                 jobs[job_id]["status"] = "completed"
                 jobs[job_id]["completed_at"] = datetime.datetime.now().isoformat()
             else:
                 jobs[job_id]["status"] = "failed"
-                jobs[job_id]["error"] = "Extraction finished but no content was found."
-        else:
-            jobs[job_id]["status"] = "failed"
-            jobs[job_id]["error"] = f"Scrapy process exited with code {p.exitcode}"
-            
+                jobs[job_id]["error"] = "Extraction failed or produced no results."
+
+        # Register callbacks for the deferred
+        crawl_deferred.addCallback(lambda _: update_job_status(True))
+        crawl_deferred.addErrback(lambda e: update_job_status(False))
+
     except Exception as e:
-        print(f"Scrapy Execution Exception: {e}")
+        print(f"Scrapy Dispatch Exception: {e}")
         jobs[job_id]["status"] = "failed"
         jobs[job_id]["error"] = str(e)
 
@@ -233,9 +247,6 @@ async def download_file(job_id: str, format: str = "csv"):
         raise HTTPException(status_code=400, detail="Invalid format. Supported: csv, json, zip")
 
 if __name__ == "__main__":
-    # Required for PyInstaller + multiprocessing
-    multiprocessing.freeze_support()
-    
     import uvicorn
     import argparse
     

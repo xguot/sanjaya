@@ -1,7 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all, collect_submodules, collect_data_files
 
-datas = [('../sanjaya', 'sanjaya'), ('../scrapy.cfg', '.')]
+datas = [
+    ('../sanjaya/spiders', 'sanjaya/spiders'), 
+    ('../sanjaya/settings.py', 'sanjaya'),
+    ('../scrapy.cfg', '.')
+]
 binaries = []
 hiddenimports = [
     'uvicorn.logging', 
@@ -16,7 +20,10 @@ hiddenimports = [
     'uvicorn.lifespan.on',
     'sanjaya',
     'sanjaya.spiders',
-    'sanjaya.spiders.sanjaya'
+    'sanjaya.spiders.sanjaya',
+    'crochet',
+    'playwright',
+    'scrapy_playwright'
 ]
 
 # Collect everything for Scrapy and Scrapy-Playwright
