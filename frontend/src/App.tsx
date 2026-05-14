@@ -190,10 +190,10 @@ export default function App() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-64 flex-shrink-0 bg-white dark:bg-slate-950 border-r border-outline flex flex-col p-6 z-20 transition-colors shadow-sm">
+        <aside className="w-64 flex-shrink-0 bg-slate-50 dark:bg-slate-950 border-r border-outline flex flex-col p-6 z-20 transition-colors shadow-sm">
           <div className="mb-8 border-b border-outline pb-6">
-            <h2 className="text-xl font-serif font-semibold text-primary">Control Panel</h2>
-            <p className="text-xs font-mono text-on-surface-variant mt-1">System Engine</p>
+            <h2 className="text-xl font-serif font-semibold text-slate-900 dark:text-white">Control Panel</h2>
+            <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-tighter">System Engine</p>
           </div>
 
           <nav className="flex-1 space-y-1">
@@ -359,26 +359,26 @@ function DiscoveryView({ keyword, setKeyword, isSearching, isExtracting, results
           <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center text-blue-600 text-3xl shadow-inner">
             🔭
           </div>
-          <div className="max-w-md space-y-3">
-            <h3 className="text-xl font-serif font-bold text-primary">Ready for Discovery</h3>
-            <p className="text-sm text-on-surface-variant leading-relaxed">
-              Sanjaya is currently querying the <strong>OpenAlex</strong> database. Enter keywords above to find and extract academic papers.
+          <div className="max-w-md space-y-4">
+            <h3 className="text-2xl font-serif font-bold text-slate-900 dark:text-white">Ready for Discovery</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed px-4">
+              The engine is currently connected to the <strong>OpenAlex Global Graph</strong>. Enter keywords above to retrieve entities for extraction.
             </p>
-            <div className="pt-4 border-t border-outline">
-              <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest mb-2">Not in database?</p>
-              <p className="text-xs text-on-surface-variant">
-                If your target paper is not found, switch to the <strong>Extraction</strong> tab and use <strong>Sniper Mode</strong> to paste the DOI or URL directly.
+            <div className="mx-8 p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-dashed border-outline">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">Paper not in database?</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 italic">
+                Navigate to the <strong>Extraction</strong> tab and use <strong>Sniper Mode</strong> to paste the direct URL or DOI.
               </p>
             </div>
           </div>
-          <div className="flex gap-4 items-center pt-8 opacity-40 grayscale group-hover:grayscale-0 transition-all">
-            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Powered by</span>
+          <div className="flex gap-4 items-center pt-8 opacity-40">
+            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Stack Architecture</span>
             <div className="flex gap-3 items-center">
-              <span className="text-[11px] font-bold text-slate-600">OpenAlex</span>
+              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">OpenAlex</span>
               <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
-              <span className="text-[11px] font-bold text-slate-600">Scrapy</span>
+              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Scrapy</span>
               <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
-              <span className="text-[11px] font-bold text-slate-600">Playwright</span>
+              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Playwright</span>
             </div>
           </div>
         </div>
