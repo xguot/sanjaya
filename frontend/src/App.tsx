@@ -158,7 +158,7 @@ export default function App() {
         <aside className="w-64 flex-shrink-0 bg-surface-low border-r border-outline flex flex-col p-6 z-20">
           <div className="mb-8 border-b border-outline pb-6">
             <h2 className="text-xl font-serif font-semibold text-primary">Control Panel</h2>
-            <p className="text-xs font-mono text-on-surface-variant mt-1">System Engine v1.0.4</p>
+            <p className="text-xs font-mono text-on-surface-variant mt-1">System Engine</p>
           </div>
 
           <nav className="flex-1 space-y-1">
@@ -249,7 +249,7 @@ function DiscoveryView({ keyword, setKeyword, isSearching, isExtracting, results
   return (
     <div className="max-w-5xl relative">
       <div className="mb-12">
-        <h2 className="text-4xl font-serif font-bold text-primary mb-4">Academic Graph Search</h2>
+        <h2 className="text-4xl font-serif font-bold text-primary mb-4">Academic Discovery</h2>
         <div className="flex gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" size={20} />
