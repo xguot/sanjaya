@@ -1,0 +1,59 @@
+name: Build Sanjaya Desktop Apps
+
+on:
+  workflow_dispatch: # This allows you to trigger the build manually via a button
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest] # Run this job on both Mac and Windows simultaneously
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' # Matches a stable modern Python
+
+      - name: Install Backend Dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install pyinstaller fastapi uvicorn scrapy scrapy-playwright pandas httpx
+
+      - name: Compile Python Backend (PyInstaller)
+        run: |
+          cd backend
+          pyinstaller --noconfirm --onedir --console --name "sanjaya_api" --hidden-import "uvicorn.logging" --hidden-import "uvicorn.loops" --hidden-import "uvicorn.loops.auto" --hidden-import "uvicorn.protocols" --hidden-import "uvicorn.protocols.http" --hidden-import "uvicorn.protocols.http.auto" --hidden-import "uvicorn.protocols.websockets" --hidden-import "uvicorn.protocols.websockets.auto" --hidden-import "uvicorn.lifespan" --hidden-import "uvicorn.lifespan.on" --collect-all scrapy --collect-all scrapy_playwright "main.py"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Build Electron App
+        run: |
+          cd frontend
+          npm run build:app
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Required by electron-builder sometimes
+
+      - name: Upload Final Installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sanjaya-Installers-${{ matrix.os }}
+          path: |
+            frontend/dist/*.exe
+            frontend/dist/*.dmg
+            frontend/dist_electron/*.exe
+            frontend/dist_electron/*.dmg
+          retention-days: 7
