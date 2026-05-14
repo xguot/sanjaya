@@ -190,10 +190,10 @@ export default function App() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-64 flex-shrink-0 bg-slate-50 dark:bg-slate-950 border-r border-outline flex flex-col p-6 z-20 transition-colors shadow-sm">
-          <div className="mb-8 border-b border-outline pb-6">
-            <h2 className="text-xl font-serif font-semibold text-slate-900 dark:text-white">Control Panel</h2>
-            <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-tighter">System Engine</p>
+        <aside className="w-64 flex-shrink-0 bg-slate-50 border-r border-slate-200 flex flex-col p-6 z-20 transition-colors shadow-sm">
+          <div className="mb-8 border-b border-slate-200 pb-6">
+            <h2 className="text-xl font-serif font-semibold text-slate-800">Control Panel</h2>
+            <p className="text-xs font-mono text-slate-500 mt-1 uppercase tracking-tighter">System Engine</p>
           </div>
 
           <nav className="flex-1 space-y-1">
@@ -270,9 +270,9 @@ function NavItem({ active, icon, label, onClick }: { active: boolean, icon: Reac
     <button
       onClick={onClick}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 border-l-4 ${
-        active 
-          ? 'bg-accent/10 text-secondary border-secondary font-medium' 
-          : 'text-on-surface-variant border-transparent hover:bg-surface-high hover:text-primary'
+        active
+          ? 'bg-blue-50 text-blue-700 border-blue-700 font-medium'
+          : 'text-slate-600 border-transparent hover:bg-slate-100 hover:text-slate-800'
       }`}
     >
       {icon}
@@ -280,7 +280,6 @@ function NavItem({ active, icon, label, onClick }: { active: boolean, icon: Reac
     </button>
   );
 }
-
 // --- View Components ---
 
 function DocumentationView() {
@@ -552,24 +551,24 @@ function ExportView({ job, activeJobId }: any) {
       </div>
 
       <div className="flex-1 flex flex-col gap-10">
-        <div className="border border-outline rounded-2xl overflow-hidden bg-white dark:bg-surface-low shadow-sm">
-          <div className="px-6 py-4 bg-slate-50 dark:bg-slate-950 border-b border-outline flex justify-between items-center">
-            <h3 className="text-lg font-serif font-semibold text-primary flex items-center gap-3">
-               <Database size={18} className="text-on-surface-variant" />
+        <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
+          <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+            <h3 className="text-lg font-serif font-semibold text-slate-800 flex items-center gap-3">
+               <Database size={18} className="text-slate-500" />
                Dataset Preview
             </h3>
-            <span className="text-[10px] font-mono text-on-surface-variant bg-white dark:bg-surface-high border border-outline px-2 py-1 rounded">Sample Rows</span>
+            <span className="text-[10px] font-mono text-slate-500 bg-white border border-slate-200 px-2 py-1 rounded">Sample Rows</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-100 dark:bg-slate-900 text-[10px] font-mono text-slate-500 uppercase tracking-widest border-b border-outline">
+              <thead className="bg-slate-100 text-[10px] font-mono text-slate-700 uppercase tracking-widest border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-4 text-left border-r border-outline">Reference URL</th>
-                  <th className="px-6 py-4 text-left border-r border-outline">Method</th>
+                  <th className="px-6 py-4 text-left border-r border-slate-200">Reference URL</th>
+                  <th className="px-6 py-4 text-left border-r border-slate-200">Method</th>
                   <th className="px-6 py-4 text-left">Text Fragment</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-outline">
+              <tbody className="divide-y divide-slate-100">
                 {preview.length > 0 ? preview.map((row: any, i: number) => (
                   <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                     <td className="px-6 py-4 text-[11px] font-mono text-secondary truncate max-w-[200px]">{row.url}</td>
