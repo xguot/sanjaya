@@ -1,6 +1,7 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
+const fs = require('fs');
 
 let mainWindow;
 let pythonProcess = null;
@@ -18,12 +19,17 @@ function createWindow() {
 
   // [ENGINEER CRITICAL] Smart Subprocess Management
   const isPackaged = app.isPackaged;
-  
+  let backendPath;
+  let cwd;
+
   if (!isPackaged) {
     // DEV MODE: Spawn raw python from backend directory
     console.log('App is in Dev Mode. Spawning raw Python script...');
-    pythonProcess = spawn('python', ['main.py', '--port', '8844'], {
-      cwd: path.join(__dirname, '../../backend'),
+    backendPath = 'python';
+    cwd = path.join(__dirname, '../../backend');
+    
+    pythonProcess = spawn(backendPath, ['main.py', '--port', '8844'], {
+      cwd: cwd,
       env: { ...process.env, PYTHONPATH: path.join(__dirname, '../../') }
     });
     
@@ -32,11 +38,21 @@ function createWindow() {
   } else {
     // PROD MODE: Spawn compiled PyInstaller executable
     console.log('App is Packaged. Spawning compiled binary...');
-    const backendPath = path.join(process.resourcesPath, 'sanjaya_api', 'sanjaya_api');
     
-    pythonProcess = spawn(backendPath, ['--port', '8844'], {
-      cwd: path.join(process.resourcesPath, 'sanjaya_api'),
-    });
+    // Check common production paths
+    const possiblePaths = [
+      path.join(process.resourcesPath, 'sanjaya_api', 'sanjaya_api'), // Default electron-builder
+      path.join(process.resourcesPath, 'sanjaya_api'),
+      path.join(__dirname, '..', '..', 'backend', 'dist', 'sanjaya_api', 'sanjaya_api'), // Local simulation
+    ];
+
+    backendPath = possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
+    cwd = path.dirname(backendPath);
+
+    console.log(`Executable Path: ${backendPath}`);
+    console.log(`CWD: ${cwd}`);
+
+    pythonProcess = spawn(backendPath, ['--port', '8844'], { cwd: cwd });
 
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }

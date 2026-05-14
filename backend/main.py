@@ -246,6 +246,10 @@ async def download_file(job_id: str, format: str = "csv"):
     else:
         raise HTTPException(status_code=400, detail="Invalid format. Supported: csv, json, zip")
 
+@app.get("/health")
+async def health_check():
+    return {"status": "ok", "timestamp": datetime.datetime.now().isoformat()}
+
 if __name__ == "__main__":
     import uvicorn
     import argparse

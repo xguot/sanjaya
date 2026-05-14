@@ -56,6 +56,26 @@ export default function App() {
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [backendReady, setBackendReady] = useState(false);
+
+  useEffect(() => {
+    const checkBackend = async (retries = 5) => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const res = await fetch('http://localhost:8844/health');
+          if (res.ok) {
+            setBackendReady(true);
+            return;
+          }
+        } catch (e) {
+          console.log(`Backend not ready, retry ${i + 1}/${retries}...`);
+        }
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+      setError("Engine failed to initialize. Please restart the application.");
+    };
+    checkBackend();
+  }, []);
 
   const searchOpenAlex = async () => {
     if (!keyword.trim()) return;
@@ -180,10 +200,10 @@ export default function App() {
 
           <button 
             onClick={() => startExtraction()}
-            disabled={isExtracting}
+            disabled={isExtracting || !backendReady}
             className="mt-auto w-full bg-sky-700 text-white font-mono text-xs py-3 rounded-sm hover:bg-sky-800 transition-colors uppercase tracking-wider font-semibold disabled:opacity-50"
           >
-            {isExtracting ? 'Engine Active' : 'Initialize Sanjaya'}
+            {isExtracting ? 'Engine Active' : !backendReady ? 'Initializing...' : 'Initialize Sanjaya'}
           </button>
         </aside>
 
