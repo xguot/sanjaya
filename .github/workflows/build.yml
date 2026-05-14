@@ -1,5 +1,8 @@
 name: Build Sanjaya Desktop Apps
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   workflow_dispatch: # This allows you to trigger the build manually via a button
 
@@ -56,6 +59,4 @@ jobs:
             frontend/dist/*.dmg
             frontend/dist_electron/*.exe
             frontend/dist_electron/*.dmg
-          retention-days: 7
-/dist_electron/*.dmg
           retention-days: 7
