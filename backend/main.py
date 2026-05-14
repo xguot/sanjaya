@@ -115,16 +115,23 @@ def run_scrapy_spider(job_id: str, start_urls: List[str]):
 
 @app.on_event("startup")
 async def startup_event():
-    """Automate Playwright browser provisioning on first run."""
+    """Automate Playwright browser provisioning on first run without blocking."""
     import subprocess
     import sys
-    print("Verifying Playwright dependencies...")
-    try:
-        # Programmatically trigger the playwright install command
-        subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=True)
-        print("Playwright Chromium is ready.")
-    except Exception as e:
-        print(f"Auto-provisioning failed: {e}")
+    from fastapi import BackgroundTasks
+    
+    def install_playwright():
+        print("Verifying Playwright dependencies...")
+        try:
+            # Programmatically trigger the playwright install command
+            subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=True)
+            print("Playwright Chromium is ready.")
+        except Exception as e:
+            print(f"Auto-provisioning failed: {e}")
+
+    # Use a thread or simple background execution if BackgroundTasks isn't available here
+    import threading
+    threading.Thread(target=install_playwright).start()
 
 @app.get("/api/discovery/openalex")
 async def discover_openalex(query: str = Query(..., min_length=1)):
@@ -256,6 +263,10 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     import argparse
+    import multiprocessing
+    
+    # [ENGINEER CRITICAL] Required for PyInstaller + multiprocessing
+    multiprocessing.freeze_support()
     
     parser = argparse.ArgumentParser(description="Run the Sanjaya API server.")
     parser.add_argument("--port", type=int, default=8844, help="Port to run the server on.")

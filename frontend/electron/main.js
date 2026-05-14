@@ -52,7 +52,14 @@ function createWindow() {
     console.log(`Executable Path: ${backendPath}`);
     console.log(`CWD: ${cwd}`);
 
-    pythonProcess = spawn(backendPath, ['--port', '8844'], { cwd: cwd });
+    pythonProcess = spawn(backendPath, ['--port', '8844'], { 
+      cwd: cwd,
+      shell: process.platform === 'win32' // Required for some Windows environments
+    });
+
+    pythonProcess.on('error', (err) => {
+      console.error('FAILED TO START BACKEND:', err);
+    });
 
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
