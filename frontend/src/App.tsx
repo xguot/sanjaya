@@ -640,7 +640,7 @@ function ExportCard({ icon, title, format, desc, href, recommended }: any) {
           ? 'bg-sky-700 text-white border-sky-700 hover:bg-sky-800' 
           : 'bg-white text-sky-700 border-sky-200 hover:bg-sky-50'
       }`}>
-        <Download size={14} md:size={16} />
+        <Download size={16} />
         Download
       </div>
     </a>
