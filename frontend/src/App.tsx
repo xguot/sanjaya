@@ -159,7 +159,7 @@ export default function App() {
           >
             {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <Eye className="text-sky-700 hidden xs:block" size={24} />
+          <Eye className="text-sky-700" size={24} />
           <h1 className="text-xl md:text-2xl font-serif font-bold text-slate-800">Sanjaya</h1>
         </div>
         <div className="flex items-center gap-6">
