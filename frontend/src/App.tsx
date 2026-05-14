@@ -44,7 +44,8 @@ enum View {
   Documentation = 'Documentation'
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api';
+const RAW_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+const API_BASE = RAW_BASE.endsWith('/api') ? RAW_BASE : `${RAW_BASE.replace(/\/$/, '')}/api`;
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>(View.TargetScraping);
