@@ -44,23 +44,32 @@ def run_scrapy_spider(job_id: str, start_urls: List[str]):
     urls_str = ",".join(start_urls)
     output_file = os.path.join(DATA_DIR, f"{job_id}.csv")
     
-    # Use the current Python executable to run scrapy to ensure it's found in all environments
-    cmd = f"{sys.executable} -m scrapy crawl sanjaya -a start_urls='{urls_str}' -o {output_file}"
+    # Use a list of arguments for safer execution and better error handling
+    cmd = [
+        sys.executable, "-m", "scrapy", "crawl", "sanjaya",
+        "-a", f"start_urls={urls_str}",
+        "-o", output_file,
+        "--set", "LOG_LEVEL=INFO"
+    ]
     
     try:
-        result = subprocess.run(cmd, shell=True, cwd=BASE_DIR, capture_output=True, text=True)
+        # Capture output to diagnose "no content" issues
+        result = subprocess.run(cmd, cwd=BASE_DIR, capture_output=True, text=True)
+        
         if result.returncode == 0:
             # Check if the output file exists and has content
             if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
                 jobs[job_id]["status"] = "completed"
                 jobs[job_id]["completed_at"] = datetime.datetime.now().isoformat()
             else:
+                # Log the stderr even if returncode is 0 to help diagnose why nothing was scraped
+                print(f"Scrapy finished with 0 but no content: {result.stderr}")
                 jobs[job_id]["status"] = "failed"
                 jobs[job_id]["error"] = "Extraction finished but no content was found. The target pages might be protected or have unsupported structures."
         else:
-            print(f"Scrapy Error: {result.stderr}")
+            print(f"Scrapy Error (Code {result.returncode}): {result.stderr}")
             jobs[job_id]["status"] = "failed"
-            jobs[job_id]["error"] = result.stderr
+            jobs[job_id]["error"] = f"Scrapy Engine Error: {result.stderr or 'Unknown error'}"
     except Exception as e:
         print(f"Subprocess Exception: {e}")
         jobs[job_id]["status"] = "failed"

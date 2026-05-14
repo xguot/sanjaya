@@ -46,28 +46,43 @@ class SanjayaSpider(scrapy.Spider):
 
     def parse_article(self, response):
         """Attempt to extract text using specialized and generic selectors."""
-        self.logger.info(f"Extracting: {response.url}")
+        self.logger.info(f"Extracting: {response.url} (Status: {response.status})")
         
-        # 1. BNU Specialized Selectors
-        title_blocks = response.css('.abs-tit::text').getall()
-        body_blocks = response.css('#author~ p+ p::text, p::text').getall()
+        # 1. BNU Specialized Selectors (using *::text for nested content)
+        title_blocks = response.css('.abs-tit *::text').getall()
+        # Specific BNU body blocks
+        body_blocks = response.css('#author~ p+ p *::text').getall()
         
         # 2. Generic Academic Selectors (Publisher Agnostic)
         if not title_blocks:
-            title_blocks = response.css('h1::text, .article-title::text, [itemprop="name"]::text, .publication-title::text').getall()
+            title_blocks = response.css('h1 *::text, .article-title *::text, [itemprop="name"] *::text, .publication-title *::text').getall()
         
+        # Fallback to broad paragraph extraction if specific blocks are empty or too short
         if len(" ".join(body_blocks)) < 200:
-            body_blocks += response.css('.abstract p::text, .abstract-text::text, #abstract p::text, article p::text, .article-section p::text, main p::text').getall()
+            body_blocks += response.css('p *::text').getall()
+            
+        # 3. Deep Content Extraction (Proper XPaths for common structures)
+        if len(" ".join(body_blocks)) < 300:
+            # Target common abstract and content containers
+            body_blocks += response.xpath('//div[contains(@class, "abstract")]//text() | //div[contains(@id, "abstract")]//text() | //section[contains(@class, "abstract")]//text()').getall()
+            body_blocks += response.xpath('//div[contains(@class, "article-body")]//text() | //div[contains(@class, "entry-content")]//text() | //div[contains(@id, "content")]//text()').getall()
+            # Absolute fallback: any article or main tag
+            body_blocks += response.xpath('//article//p//text() | //main//p//text()').getall()
 
         cleaned_text = self._clean_text(title_blocks + body_blocks)
 
-        # 3. Fallback to Playwright if static extraction yields too little data
-        if len(cleaned_text) < 300 and not response.meta.get("playwright"):
-            self.logger.warning(f"Static extraction insufficient for {response.url}. Re-attempting with Playwright.")
+        # 4. Fallback to Playwright if static extraction yields too little data
+        if len(cleaned_text) < 400 and not response.meta.get("playwright"):
+            self.logger.warning(f"Static extraction insufficient ({len(cleaned_text)} chars). Re-attempting with Playwright: {response.url}")
             yield scrapy.Request(
                 url=response.url,
                 callback=self.parse_article,
-                meta={"playwright": True},
+                meta={
+                    "playwright": True,
+                    "playwright_page_methods": [
+                        PageMethod("wait_for_timeout", 5000), # Allow time for JS to render
+                    ]
+                },
                 dont_filter=True 
             )
         else:
@@ -79,7 +94,7 @@ class SanjayaSpider(scrapy.Spider):
                     "content": cleaned_text
                 }
             else:
-                self.logger.error(f"Failed to extract any text from {response.url}")
+                self.logger.error(f"FATAL: Failed to extract any text from {response.url} after {'Playwright' if response.meta.get('playwright') else 'static'} attempt.")
 
     def _clean_text(self, text_list):
         """Helper to strip whitespace, newlines, and tabs."""
