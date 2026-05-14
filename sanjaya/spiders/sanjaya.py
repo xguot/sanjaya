@@ -32,15 +32,23 @@ class SanjayaSpider(scrapy.Spider):
             else:
                 # Direct Article URLs
                 # For non-BNU sites, many academic publishers block static Scrapy
-                # We start with static but fallback to Playwright quickly
-                yield scrapy.Request(url, callback=self.parse_article)
+                # We start with static but handle all status codes to allow Playwright fallback
+                yield scrapy.Request(
+                    url, 
+                    callback=self.parse_article,
+                    meta={'handle_httpstatus_all': True}
+                )
 
     def parse(self, response):
         """Router for BNU index pages."""
         if 'volumn_' in response.url or 'searchArticle' in response.url:
-            article_links = response.css('.biaoti::attr(href)').getall()
+            article_links = response.css('.biaoti ::attr(href)').getall()
             for link in article_links:
-                yield response.follow(link, callback=self.parse_article)
+                yield response.follow(
+                    link, 
+                    callback=self.parse_article,
+                    meta={'handle_httpstatus_all': True}
+                )
         else:
             yield from self.parse_article(response)
 
@@ -48,18 +56,18 @@ class SanjayaSpider(scrapy.Spider):
         """Attempt to extract text using specialized and generic selectors."""
         self.logger.info(f"Extracting: {response.url} (Status: {response.status})")
         
-        # 1. BNU Specialized Selectors (using *::text for nested content)
-        title_blocks = response.css('.abs-tit *::text').getall()
+        # 1. BNU Specialized Selectors (using ::text for all descendants)
+        title_blocks = response.css('.abs-tit ::text').getall()
         # Specific BNU body blocks
-        body_blocks = response.css('#author~ p+ p *::text').getall()
+        body_blocks = response.css('#author~ p+ p ::text').getall()
         
         # 2. Generic Academic Selectors (Publisher Agnostic)
         if not title_blocks:
-            title_blocks = response.css('h1 *::text, .article-title *::text, [itemprop="name"] *::text, .publication-title *::text').getall()
+            title_blocks = response.css('h1 ::text, .article-title ::text, [itemprop="name"] ::text, .publication-title ::text').getall()
         
         # Fallback to broad paragraph extraction if specific blocks are empty or too short
         if len(" ".join(body_blocks)) < 200:
-            body_blocks += response.css('p *::text').getall()
+            body_blocks += response.css('p ::text').getall()
             
         # 3. Deep Content Extraction (Proper XPaths for common structures)
         if len(" ".join(body_blocks)) < 300:
@@ -71,9 +79,11 @@ class SanjayaSpider(scrapy.Spider):
 
         cleaned_text = self._clean_text(title_blocks + body_blocks)
 
-        # 4. Fallback to Playwright if static extraction yields too little data
-        if len(cleaned_text) < 400 and not response.meta.get("playwright"):
-            self.logger.warning(f"Static extraction insufficient ({len(cleaned_text)} chars). Re-attempting with Playwright: {response.url}")
+        # 4. Fallback to Playwright if static extraction yields too little data OR if we got a non-200 status
+        is_blocked = response.status in [403, 401, 429, 503]
+        if (len(cleaned_text) < 400 or is_blocked) and not response.meta.get("playwright"):
+            reason = "insufficient content" if not is_blocked else f"status {response.status}"
+            self.logger.warning(f"Static extraction failed ({reason}). Re-attempting with Playwright: {response.url}")
             yield scrapy.Request(
                 url=response.url,
                 callback=self.parse_article,
