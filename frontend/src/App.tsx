@@ -355,30 +355,30 @@ function DiscoveryView({ keyword, setKeyword, isSearching, isExtracting, results
       </div>
 
       {results.length === 0 && !isSearching && (
-        <div className="mt-20 flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in zoom-in duration-500">
-          <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center text-blue-600 text-3xl shadow-inner">
+        <div className="mt-20 flex flex-col items-center justify-center text-center space-y-8 animate-in fade-in zoom-in duration-500">
+          <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center text-blue-600 text-3xl shadow-inner border border-blue-100 dark:border-blue-900/30">
             🔭
           </div>
           <div className="max-w-md space-y-4">
-            <h3 className="text-2xl font-serif font-bold text-slate-900 dark:text-white">Ready for Discovery</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed px-4">
+            <h3 className="text-3xl font-serif font-bold text-slate-800 dark:text-white">Ready for Discovery</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed px-4">
               The engine is currently connected to the <strong>OpenAlex Global Graph</strong>. Enter keywords above to retrieve entities for extraction.
             </p>
-            <div className="mx-8 p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-dashed border-outline">
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">Paper not in database?</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 italic">
+            <div className="mx-8 p-6 bg-blue-50/50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-blue-200 dark:border-slate-800">
+              <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest mb-2">Paper not in database?</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 italic">
                 Navigate to the <strong>Extraction</strong> tab and use <strong>Sniper Mode</strong> to paste the direct URL or DOI.
               </p>
             </div>
           </div>
-          <div className="flex gap-4 items-center pt-8 opacity-40">
-            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Stack Architecture</span>
-            <div className="flex gap-3 items-center">
-              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">OpenAlex</span>
-              <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
-              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Scrapy</span>
-              <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
-              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Playwright</span>
+          <div className="flex flex-col gap-3 items-center pt-8">
+            <span className="text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-[0.2em]">Stack Architecture</span>
+            <div className="flex gap-4 items-center px-4 py-2 bg-white dark:bg-surface-high border border-outline rounded-full shadow-sm">
+              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">OpenAlex</span>
+              <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
+              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Scrapy</span>
+              <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
+              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Playwright</span>
             </div>
           </div>
         </div>
