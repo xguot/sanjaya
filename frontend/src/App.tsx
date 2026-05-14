@@ -190,10 +190,10 @@ export default function App() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-64 flex-shrink-0 bg-slate-50 border-r border-slate-200 flex flex-col p-6 z-20 transition-colors shadow-sm">
-          <div className="mb-8 border-b border-slate-200 pb-6">
-            <h2 className="text-xl font-serif font-semibold text-slate-800">Control Panel</h2>
-            <p className="text-xs font-mono text-slate-500 mt-1 uppercase tracking-tighter">System Engine</p>
+        <aside className="w-64 flex-shrink-0 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col p-6 z-20 transition-colors shadow-sm">
+          <div className="mb-8 border-b border-slate-200 dark:border-slate-800 pb-6">
+            <h2 className="text-xl font-serif font-semibold text-slate-800 dark:text-slate-200">Control Panel</h2>
+            <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-tighter">System Engine</p>
           </div>
 
           <nav className="flex-1 space-y-1">
@@ -211,7 +211,7 @@ export default function App() {
           </button>
         </aside>
 
-        <main className="flex-1 overflow-y-auto relative bg-white dark:bg-background transition-colors">
+        <main className="flex-1 overflow-y-auto relative bg-white dark:bg-slate-950 transition-colors">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentView}
@@ -271,8 +271,8 @@ function NavItem({ active, icon, label, onClick }: { active: boolean, icon: Reac
       onClick={onClick}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 border-l-4 ${
         active
-          ? 'bg-blue-50 text-blue-700 border-blue-700 font-medium'
-          : 'text-slate-600 border-transparent hover:bg-slate-100 hover:text-slate-800'
+          ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-700 dark:border-blue-400 font-medium'
+          : 'text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200'
       }`}
     >
       {icon}
@@ -340,7 +340,7 @@ function DiscoveryView({ keyword, setKeyword, isSearching, isExtracting, results
               onChange={(e) => setKeyword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && onSearch()}
               placeholder="Search via OpenAlex (e.g., '抑郁', 'genomic sequencing')..." 
-              className="w-full pl-12 pr-4 py-4 bg-surface-low dark:bg-surface-high border border-outline rounded-xl focus:ring-4 focus:ring-secondary/10 focus:border-secondary outline-none transition-all font-mono text-on-surface placeholder:text-slate-400"
+              className="w-full pl-12 pr-4 py-4 bg-surface-low dark:bg-slate-900 border border-outline dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-secondary/10 focus:border-secondary outline-none transition-all font-mono text-on-surface dark:text-white placeholder:text-slate-400"
             />
           </div>
           <button 
@@ -475,7 +475,7 @@ function ExtractionView({ inputUrls, setInputUrls, job, isExtracting, onExecute 
               value={inputUrls}
               onChange={(e) => setInputUrls(e.target.value)}
               placeholder="Paste URLs or DOIs (one per line)..."
-              className="flex-1 p-6 font-mono text-xs outline-none bg-white dark:bg-surface-low resize-none text-on-surface placeholder:text-slate-400"
+              className="flex-1 p-6 font-mono text-xs outline-none bg-white dark:bg-slate-900 resize-none text-on-surface dark:text-white placeholder:text-slate-400"
             />
             <div className="p-4 border-t border-outline flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
               <span className="text-[10px] font-mono text-on-surface-variant">{(inputUrls || '').split('\n').filter((u: string) => u.trim()).length} Targets Loaded</span>
@@ -551,24 +551,24 @@ function ExportView({ job, activeJobId }: any) {
       </div>
 
       <div className="flex-1 flex flex-col gap-10">
-        <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
-          <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-            <h3 className="text-lg font-serif font-semibold text-slate-800 flex items-center gap-3">
-               <Database size={18} className="text-slate-500" />
+        <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
+          <div className="px-6 py-4 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+            <h3 className="text-lg font-serif font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-3">
+               <Database size={18} className="text-slate-500 dark:text-slate-400" />
                Dataset Preview
             </h3>
-            <span className="text-[10px] font-mono text-slate-500 bg-white border border-slate-200 px-2 py-1 rounded">Sample Rows</span>
+            <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded">Sample Rows</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-100 text-[10px] font-mono text-slate-700 uppercase tracking-widest border-b border-slate-200">
+              <thead className="bg-slate-100 dark:bg-slate-900 text-[10px] font-mono text-slate-700 dark:text-slate-300 uppercase tracking-widest border-b border-slate-200 dark:border-slate-800">
                 <tr>
-                  <th className="px-6 py-4 text-left border-r border-slate-200">Reference URL</th>
-                  <th className="px-6 py-4 text-left border-r border-slate-200">Method</th>
+                  <th className="px-6 py-4 text-left border-r border-slate-200 dark:border-slate-800">Reference URL</th>
+                  <th className="px-6 py-4 text-left border-r border-slate-200 dark:border-slate-800">Method</th>
                   <th className="px-6 py-4 text-left">Text Fragment</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {preview.length > 0 ? preview.map((row: any, i: number) => (
                   <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                     <td className="px-6 py-4 text-[11px] font-mono text-secondary truncate max-w-[200px]">{row.url}</td>
