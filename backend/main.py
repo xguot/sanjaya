@@ -17,15 +17,14 @@ import sys
 from typing import List, Optional
 from scrapy.crawler import CrawlerRunner
 from scrapy.utils.log import configure_logging
-from scrapy.utils.project import get_project_settings
 from scrapy.settings import Settings
 
 app = FastAPI(title="Sanjaya API")
 
-# Allow SvelteKit to talk to FastAPI
+# Allow Frontend to talk to FastAPI
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict this to your frontend URL
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,22 +33,12 @@ app.add_middleware(
 # In-memory job store
 jobs = {}
 
-# [ENGINEER CRITICAL] Robust Path Resolution
-def get_resource_path(relative_path):
-    """Get absolute path to resource, works for dev and for PyInstaller."""
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base_path, relative_path)
-
-BASE_DIR = get_resource_path("")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 if BASE_DIR not in sys.path:
     sys.path.append(BASE_DIR)
 
-# Import spider after sys.path update
+# Import spider
 from sanjaya.spiders.sanjaya import SanjayaSpider
 
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -59,11 +48,10 @@ if not os.path.exists(DATA_DIR):
 class UrlListPayload(BaseModel):
     urls: List[str]
 
-# [ENGINEER CRITICAL] Scrapy execution with Crochet
+# Scrapy execution with Crochet
 def get_sanjaya_settings(output_file: str):
-    """Configures Scrapy settings for the bundled environment."""
+    """Configures Scrapy settings."""
     settings = Settings()
-    # Explicitly point to the bundled settings and spiders
     settings.set('SPIDER_MODULES', ['sanjaya.spiders'])
     settings.set('NEWSPIDER_MODULE', 'sanjaya.spiders')
     settings.set('FEED_FORMAT', 'csv')
@@ -115,21 +103,18 @@ def run_scrapy_spider(job_id: str, start_urls: List[str]):
 
 @app.on_event("startup")
 async def startup_event():
-    """Automate Playwright browser provisioning on first run without blocking."""
+    """Automate Playwright browser provisioning."""
     import subprocess
     import sys
-    from fastapi import BackgroundTasks
     
     def install_playwright():
         print("Verifying Playwright dependencies...")
         try:
-            # Programmatically trigger the playwright install command
             subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=True)
             print("Playwright Chromium is ready.")
         except Exception as e:
             print(f"Auto-provisioning failed: {e}")
 
-    # Use a thread or simple background execution if BackgroundTasks isn't available here
     import threading
     threading.Thread(target=install_playwright).start()
 
@@ -263,13 +248,9 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     import argparse
-    import multiprocessing
-    
-    # [ENGINEER CRITICAL] Required for PyInstaller + multiprocessing
-    multiprocessing.freeze_support()
     
     parser = argparse.ArgumentParser(description="Run the Sanjaya API server.")
-    parser.add_argument("--port", type=int, default=8844, help="Port to run the server on.")
+    parser.add_argument("--port", type=int, default=8000, help="Port to run the server on.")
     args = parser.parse_args()
     
     uvicorn.run(app, host="0.0.0.0", port=args.port)

@@ -4,48 +4,10 @@
   "description": "Sanjaya Academic Extraction Engine",
   "author": "Sanjaya Data",
   "repository": "https://github.com/xguot/sanjaya",
-  "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview",
-    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
-    "build:react": "vite build",
-    "build:app": "npm run build:react && electron-builder"
-  },
-  "build": {
-    "appId": "com.sanjaya.app",
-    "productName": "Sanjaya",
-    "directories": {
-      "output": "dist_electron"
-    },
-    "files": [
-      "dist/**/*",
-      "electron/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "../backend/dist/sanjaya_api",
-        "to": "sanjaya_api",
-        "filter": [
-          "**/*"
-        ]
-      },
-      {
-        "from": "../sanjaya",
-        "to": "sanjaya",
-        "filter": [
-          "**/*"
-        ]
-      },
-      "../scrapy.cfg"
-    ],
-    "mac": {
-      "target": "dmg"
-    },
-    "win": {
-      "target": "portable"
-    }
+    "preview": "vite preview"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.0",
@@ -63,11 +25,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.1",
-    "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
-    "electron": "^35.0.0",
-    "electron-builder": "^25.1.8",
-    "vite": "^8.0.12",
-    "wait-on": "^8.0.2"
+    "vite": "^8.0.12"
   }
 }

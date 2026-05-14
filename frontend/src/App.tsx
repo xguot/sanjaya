@@ -43,7 +43,7 @@ enum View {
   Documentation = 'Documentation'
 }
 
-const API_BASE = 'http://localhost:8844/api';
+const API_BASE = 'http://localhost:8000/api';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>(View.TargetScraping);
@@ -56,26 +56,6 @@ export default function App() {
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [backendReady, setBackendReady] = useState(false);
-
-  useEffect(() => {
-    const checkBackend = async (retries = 12) => {
-      for (let i = 0; i < retries; i++) {
-        try {
-          const res = await fetch('http://localhost:8844/health');
-          if (res.ok) {
-            setBackendReady(true);
-            return;
-          }
-        } catch (e) {
-          console.log(`Backend not ready (attempt ${i + 1}/${retries})...`);
-        }
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-      setError("Engine failed to initialize after 24 seconds. Please check if a firewall is blocking port 8844 and restart.");
-    };
-    checkBackend();
-  }, []);
 
   const searchOpenAlex = async () => {
     if (!keyword.trim()) return;
@@ -204,10 +184,10 @@ export default function App() {
 
           <button 
             onClick={() => startExtraction()}
-            disabled={isExtracting || !backendReady}
+            disabled={isExtracting}
             className="mt-auto w-full bg-sky-700 text-white font-mono text-xs py-3 rounded-sm hover:bg-sky-800 transition-colors uppercase tracking-wider font-semibold disabled:opacity-50"
           >
-            {isExtracting ? 'Engine Active' : !backendReady ? 'Initializing...' : 'Initialize Sanjaya'}
+            {isExtracting ? 'Engine Active' : 'Initialize Sanjaya'}
           </button>
         </aside>
 

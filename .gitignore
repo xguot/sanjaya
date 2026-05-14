@@ -1,7 +1,11 @@
-# [NODE] Dependency artifacts and build output
-node_modules/
+# [ELECTRON] Build output
+dist_electron/
+
+# [PYINSTALLER] Build output
+build/
 dist/
-dist-ssr/
+*.spec
+
 *.local
 .npm
 .eslintcache

@@ -1,37 +1,21 @@
-name: Build Sanjaya Desktop Apps
+name: Sanjaya Web CI
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
-  workflow_dispatch: # This allows you to trigger the build manually via a button
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest] # Run this job on both Mac and Windows simultaneously
+  build-and-test:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11' # Matches a stable modern Python
-
-      - name: Install Backend Dependencies
-        run: |
-          cd backend
-          python -m pip install --upgrade pip
-          pip install pyinstaller fastapi uvicorn scrapy scrapy-playwright pandas httpx
-
-      - name: Compile Python Backend (PyInstaller)
-        run: |
-          cd backend
-          pyinstaller --noconfirm sanjaya_api.spec
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -43,20 +27,24 @@ jobs:
           cd frontend
           npm install
 
-      - name: Build Electron App
+      - name: Build Frontend
         run: |
           cd frontend
-          npm run build:app
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          npm run build
 
-      - name: Upload Final Installers
-        uses: actions/upload-artifact@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          name: Sanjaya-Installers-${{ matrix.os }}
-          path: |
-            frontend/dist/*.exe
-            frontend/dist/*.dmg
-            frontend/dist_electron/*.exe
-            frontend/dist_electron/*.dmg
-          retention-days: 7
+          python-version: '3.11'
+
+      - name: Install Backend Dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install fastapi uvicorn scrapy scrapy-playwright pandas httpx crochet
+
+      - name: Lint Backend
+        run: |
+          cd backend
+          # Simple check to ensure code runs
+          python -c "import main; print('Backend import successful')"
