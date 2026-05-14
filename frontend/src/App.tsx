@@ -52,6 +52,7 @@ export default function App() {
   const [isSearching, setIsSearching] = useState(false);
   const [inputUrls, setInputUrls] = useState('');
   const [job, setJob] = useState<ExtractionJob | null>(null);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -106,6 +107,7 @@ export default function App() {
       if (!res.ok) throw new Error('Extraction initialization failed');
       const data = await res.json();
       setJob(data);
+      setActiveJobId(data.job_id);
       pollStatus(data.job_id);
     } catch (e: any) {
       setError(e.message);
@@ -209,7 +211,7 @@ export default function App() {
                 />
               )}
               {currentView === View.Export && (
-                <ExportView job={job} />
+                <ExportView job={job} activeJobId={activeJobId} />
               )}
             </motion.div>
           </AnimatePresence>
@@ -407,9 +409,10 @@ function ExtractionView({ inputUrls, setInputUrls, job, isExtracting, onExecute 
   );
 }
 
-function ExportView({ job }: any) {
+function ExportView({ job, activeJobId }: any) {
   const preview = job?.preview || [];
   const isReady = job?.status === 'completed';
+  const displayId = activeJobId || job?.job_id;
 
   return (
     <div className="h-full flex flex-col max-w-6xl">
@@ -418,10 +421,10 @@ function ExportView({ job }: any) {
           <h2 className="text-4xl font-serif font-bold text-primary mb-2">Export Artifacts</h2>
           <p className="text-sm text-on-surface-variant">Download structured data for downstream quantitative analysis.</p>
         </div>
-        {job?.job_id && (
+        {displayId && (
            <div className="text-right">
               <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-widest font-bold">Session Reference</span>
-              <p className="font-mono text-xs text-secondary">{job.job_id}</p>
+              <p className="font-mono text-xs text-secondary">{displayId}</p>
            </div>
         )}
       </div>
@@ -469,14 +472,14 @@ function ExportView({ job }: any) {
             title="Spreadsheet" 
             format=".CSV" 
             desc="Optimized for Excel and R statistical ingestion." 
-            href={isReady ? `${API_BASE}/download/${job.job_id}?format=csv` : '#'}
+            href={isReady && displayId ? `${API_BASE}/download/${displayId}?format=csv` : '#'}
           />
           <ExportCard 
             icon={<Code size={24} />} 
             title="Machine Readable" 
             format=".JSON" 
             desc="Structured data for NLP pipelines and API integration." 
-            href={isReady ? `${API_BASE}/download/${job.job_id}?format=json` : '#'}
+            href={isReady && displayId ? `${API_BASE}/download/${displayId}?format=json` : '#'}
             recommended
           />
           <ExportCard 
@@ -484,7 +487,7 @@ function ExportView({ job }: any) {
             title="Full Archive" 
             format=".ZIP" 
             desc="Dataset + Automated Audit Log and Manifest." 
-            href={isReady ? `${API_BASE}/download/${job.job_id}?format=zip` : '#'}
+            href={isReady && displayId ? `${API_BASE}/download/${displayId}?format=zip` : '#'}
           />
         </div>
       </div>
