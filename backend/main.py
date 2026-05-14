@@ -49,8 +49,13 @@ def run_scrapy_spider(job_id: str, start_urls: List[str]):
     try:
         result = subprocess.run(cmd, shell=True, cwd=BASE_DIR, capture_output=True, text=True)
         if result.returncode == 0:
-            jobs[job_id]["status"] = "completed"
-            jobs[job_id]["completed_at"] = datetime.datetime.now().isoformat()
+            # Check if the output file exists and has content
+            if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
+                jobs[job_id]["status"] = "completed"
+                jobs[job_id]["completed_at"] = datetime.datetime.now().isoformat()
+            else:
+                jobs[job_id]["status"] = "failed"
+                jobs[job_id]["error"] = "Extraction finished but no content was found. The target pages might be protected or have unsupported structures."
         else:
             print(f"Scrapy Error: {result.stderr}")
             jobs[job_id]["status"] = "failed"
