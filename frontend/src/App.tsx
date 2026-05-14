@@ -1,4 +1,3 @@
-/// <reference types="vite/client" />
 import { useState, useEffect, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -71,16 +70,12 @@ export default function App() {
     
     try {
       const res = await fetch(`${API_BASE}/discovery/openalex?query=${encodeURIComponent(keyword)}`);
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Connection to Backend Failed (Discovery)');
-      }
+      if (!res.ok) throw new Error('Discovery engine failure');
       const data = await res.json();
       setDiscoveryResults(data.results);
       setSelectedUrls(new Set(data.results.map((r: Paper) => r.url)));
     } catch (e: any) {
-      console.error('Discovery Fetch Error:', e);
-      setError(e.message === 'Failed to fetch' ? 'Connection to Backend Failed (Engine Offline)' : e.message);
+      setError(e.message);
     } finally {
       setIsSearching(false);
     }

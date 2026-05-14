@@ -1,6 +1,3 @@
-import crochet
-crochet.setup()
-
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -13,18 +10,14 @@ import json
 import zipfile
 import httpx
 import datetime
-import sys
 from typing import List, Optional
-from scrapy.crawler import CrawlerRunner
-from scrapy.utils.log import configure_logging
-from scrapy.settings import Settings
 
 app = FastAPI(title="Sanjaya API")
 
-# Allow Frontend to talk to FastAPI
+# Allow SvelteKit to talk to FastAPI
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"], # In production, restrict this to your frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,14 +26,8 @@ app.add_middleware(
 # In-memory job store
 jobs = {}
 
+# Ensure data directory exists
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-if BASE_DIR not in sys.path:
-    sys.path.append(BASE_DIR)
-
-# Import spider
-from sanjaya.spiders.sanjaya import SanjayaSpider
-
 DATA_DIR = os.path.join(BASE_DIR, "data")
 if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
@@ -48,85 +35,42 @@ if not os.path.exists(DATA_DIR):
 class UrlListPayload(BaseModel):
     urls: List[str]
 
-# Scrapy execution with Crochet
-def get_sanjaya_settings(output_file: str):
-    """Configures Scrapy settings."""
-    settings = Settings()
-    settings.set('SPIDER_MODULES', ['sanjaya.spiders'])
-    settings.set('NEWSPIDER_MODULE', 'sanjaya.spiders')
-    settings.set('FEED_FORMAT', 'csv')
-    settings.set('FEED_URI', output_file)
-    settings.set('TWISTED_REACTOR', 'twisted.internet.asyncioreactor.AsyncioSelectorReactor')
-    settings.set('DOWNLOAD_HANDLERS', {
-        "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
-        "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
-    })
-    settings.set('PLAYWRIGHT_LAUNCH_OPTIONS', {"headless": True}, priority='project')
-    settings.set('LOG_LEVEL', 'INFO')
-    settings.set('REQUEST_FINGERPRINTER_IMPLEMENTATION', '2.7')
-    return settings
-
-@crochet.run_in_reactor
-def run_spider_in_reactor(urls_str: str, output_file: str):
-    """Runs Scrapy spider inside the crochet-managed reactor thread."""
-    settings = get_sanjaya_settings(output_file)
-    runner = CrawlerRunner(settings)
-    return runner.crawl(SanjayaSpider, start_urls=urls_str)
+import sys
 
 def run_scrapy_spider(job_id: str, start_urls: List[str]):
-    """Orchestrates the Scrapy job and monitors completion."""
+    """Executes the Scrapy CLI command in an isolated subprocess."""
     jobs[job_id]["status"] = "processing"
     
     urls_str = ",".join(start_urls)
     output_file = os.path.join(DATA_DIR, f"{job_id}.csv")
     
+    # Use the current Python executable to run scrapy to ensure it's found in all environments
+    cmd = f"{sys.executable} -m scrapy crawl sanjaya -a start_urls='{urls_str}' -o {output_file}"
+    
     try:
-        # Start the crawl in a background thread managed by crochet
-        # EventualResult (returned by run_in_reactor) doesn't have addCallback
-        result = run_spider_in_reactor(urls_str, output_file)
-        
-        def check_completion():
-            try:
-                # Wait for the result (blocks until done, timeout required in seconds)
-                result.wait(timeout=600)
-                if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
-                    jobs[job_id]["status"] = "completed"
-                    jobs[job_id]["completed_at"] = datetime.datetime.now().isoformat()
-                else:
-                    jobs[job_id]["status"] = "failed"
-                    jobs[job_id]["error"] = "Extraction failed or produced no results."
-            except Exception as e:
+        result = subprocess.run(cmd, shell=True, cwd=BASE_DIR, capture_output=True, text=True)
+        if result.returncode == 0:
+            # Check if the output file exists and has content
+            if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
+                jobs[job_id]["status"] = "completed"
+                jobs[job_id]["completed_at"] = datetime.datetime.now().isoformat()
+            else:
                 jobs[job_id]["status"] = "failed"
-                jobs[job_id]["error"] = str(e)
-
-        import threading
-        threading.Thread(target=check_completion).start()
-
+                jobs[job_id]["error"] = "Extraction finished but no content was found. The target pages might be protected or have unsupported structures."
+        else:
+            print(f"Scrapy Error: {result.stderr}")
+            jobs[job_id]["status"] = "failed"
+            jobs[job_id]["error"] = result.stderr
     except Exception as e:
-        print(f"Scrapy Dispatch Exception: {e}")
+        print(f"Subprocess Exception: {e}")
         jobs[job_id]["status"] = "failed"
         jobs[job_id]["error"] = str(e)
-
-@app.on_event("startup")
-async def startup_event():
-    """Automate Playwright browser provisioning."""
-    import subprocess
-    import sys
-    
-    def install_playwright():
-        print("Verifying Playwright dependencies...")
-        try:
-            subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=True)
-            print("Playwright Chromium is ready.")
-        except Exception as e:
-            print(f"Auto-provisioning failed: {e}")
-
-    import threading
-    threading.Thread(target=install_playwright).start()
 
 @app.get("/api/discovery/openalex")
 async def discover_openalex(query: str = Query(..., min_length=1)):
     """Query OpenAlex for relevant papers."""
+    # OpenAlex uses 'per_page' instead of 'limit'
+    # Adding mailto is recommended for the 'polite' pool
     url = f"https://api.openalex.org/works?search={query}&per_page=50&mailto=sanjaya-app@example.com"
     async with httpx.AsyncClient(timeout=20.0) as client:
         try:
@@ -138,6 +82,7 @@ async def discover_openalex(query: str = Query(..., min_length=1)):
             data = response.json()
             results = []
             for work in data.get("results", []):
+                # Robustly handle nested Nones in the API response
                 primary_loc = work.get("primary_location") or {}
                 authorships = work.get("authorships") or []
                 
@@ -158,10 +103,7 @@ async def discover_openalex(query: str = Query(..., min_length=1)):
                 raise e
             import traceback
             traceback.print_exc()
-            return JSONResponse(
-                status_code=500, 
-                content={"detail": f"Discovery Engine Error: {str(e)}"}
-            )
+            raise HTTPException(status_code=500, detail=f"Discovery failed: {str(e)}")
 
 @app.post("/api/scrape/urls")
 async def scrape_urls(payload: UrlListPayload, background_tasks: BackgroundTasks):
@@ -185,8 +127,10 @@ async def get_job_status(job_id: str):
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     
+    # Ensure job_id is included in the response
     job_response = {**job, "job_id": job_id}
     
+    # Add a preview if completed
     if job["status"] == "completed":
         csv_path = os.path.join(DATA_DIR, f"{job_id}.csv")
         preview = []
@@ -227,6 +171,7 @@ async def download_file(job_id: str, format: str = "csv"):
         zip_path = os.path.join(DATA_DIR, f"{job_id}.zip")
         manifest_path = os.path.join(DATA_DIR, f"{job_id}_manifest.txt")
         
+        # Create manifest
         job = jobs.get(job_id, {})
         with open(manifest_path, 'w', encoding='utf-8') as f:
             f.write("Sanjaya Extraction Audit Log\n")
@@ -253,13 +198,6 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    import argparse
-    
-    parser = argparse.ArgumentParser(description="Run the Sanjaya API server.")
-    parser.add_argument("--port", type=int, default=8000, help="Port to run the server on.")
-    args = parser.parse_args()
-    
-    # Use PORT environment variable if available (for Railway), otherwise use args.port
-    port = int(os.environ.get("PORT", args.port))
-    
+    # Use PORT environment variable if available (for Railway), otherwise use default 8000
+    port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
