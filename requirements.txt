@@ -5,4 +5,5 @@ python-multipart
 httpx
 scrapy
 playwright
+scrapy-playwright
 crochet
