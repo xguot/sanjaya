@@ -302,7 +302,7 @@ function NavItem({ active, icon, label, onClick, className = "" }: { active: boo
 
 function DocumentationView() {
   return (
-    <div className="max-w-4xl space-y-10 pb-20">
+    <div className="max-w-4xl mx-auto space-y-10 pb-20">
       <div>
         <h2 className="text-3xl font-serif font-bold text-slate-800 mb-2">Usage Guide</h2>
         <p className="text-slate-500">Fast tracking for Sanjaya extraction.</p>
@@ -346,7 +346,7 @@ function DocSection({ icon, title, children }: any) {
 
 function DiscoveryView({ keyword, setKeyword, isSearching, isExtracting, results, selectedUrls, onSearch, onToggle, onSelectAll, onClear, onExtract }: any) {
   return (
-    <div className="max-w-5xl relative">
+    <div className="max-w-5xl mx-auto relative">
       <div className="mb-12">
         <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-800 mb-4">Target Scraping</h2>
         <div className="flex flex-col sm:flex-row gap-4">
@@ -472,7 +472,7 @@ function DiscoveryView({ keyword, setKeyword, isSearching, isExtracting, results
 
 function ExtractionView({ inputUrls, setInputUrls, job, isExtracting, onExecute }: any) {
   return (
-    <div className="h-full flex flex-col max-w-6xl">
+    <div className="h-full flex flex-col max-w-6xl mx-auto">
       <div className="mb-8">
         <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-800 mb-2">Extraction</h2>
         <p className="text-sm text-slate-500">Monitor the extraction pipeline.</p>
@@ -544,7 +544,7 @@ function ExportView({ job, activeJobId }: any) {
   const displayId = activeJobId || job?.job_id;
 
   return (
-    <div className="h-full flex flex-col max-w-6xl">
+    <div className="h-full flex flex-col max-w-6xl mx-auto">
       <div className="mb-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-800 mb-2">Export</h2>
