@@ -37,7 +37,7 @@ interface ExtractionJob {
 }
 
 enum View {
-  Discovery = 'Discovery',
+  TargetScraping = 'TargetScraping',
   Extraction = 'Extraction',
   Export = 'Export',
   Documentation = 'Documentation'
@@ -46,7 +46,7 @@ enum View {
 const API_BASE = 'http://localhost:8000/api';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<View>(View.Discovery);
+  const [currentView, setCurrentView] = useState<View>(View.TargetScraping);
   const [keyword, setKeyword] = useState('');
   const [discoveryResults, setDiscoveryResults] = useState<Paper[]>([]);
   const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
@@ -80,7 +80,7 @@ export default function App() {
 
   // [ENGINE] Orchestrates Scrapy subprocess execution and job queuing
   const startExtraction = async (targetUrls?: string[]) => {
-    const urls = targetUrls || (currentView === View.Discovery 
+    const urls = targetUrls || (currentView === View.TargetScraping 
       ? Array.from(selectedUrls) 
       : inputUrls.split('\n').map(u => u.trim()).filter(u => u));
 
@@ -113,7 +113,7 @@ export default function App() {
     } catch (e: any) {
       setError(e.message);
       setIsExtracting(false);
-      setCurrentView(View.Discovery); // Fallback if init fails
+      setCurrentView(View.TargetScraping); // Fallback if init fails
     }
   };
 
@@ -156,8 +156,8 @@ export default function App() {
         <div className="flex items-center gap-6">
           <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
             <button 
-              onClick={() => setCurrentView(View.Discovery)}
-              className={`${currentView === View.Discovery ? 'text-secondary' : 'text-on-surface-variant hover:text-primary'} transition-colors`}
+              onClick={() => setCurrentView(View.TargetScraping)}
+              className={`${currentView === View.TargetScraping ? 'text-secondary' : 'text-on-surface-variant hover:text-primary'} transition-colors`}
             >
               Dashboard
             </button>
@@ -187,7 +187,7 @@ export default function App() {
           </div>
 
           <nav className="flex-1 space-y-1">
-            <NavItem active={currentView === View.Discovery} icon={<Search size={20} />} label="Discovery" onClick={() => setCurrentView(View.Discovery)} />
+            <NavItem active={currentView === View.TargetScraping} icon={<Search size={20} />} label="Target Scraping" onClick={() => setCurrentView(View.TargetScraping)} />
             <NavItem active={currentView === View.Extraction} icon={<Terminal size={20} />} label="Extraction" onClick={() => setCurrentView(View.Extraction)} />
             <NavItem active={currentView === View.Export} icon={<Share size={20} />} label="Export" onClick={() => setCurrentView(View.Export)} />
           </nav>
@@ -211,7 +211,7 @@ export default function App() {
               transition={{ duration: 0.2 }}
               className="p-8 h-full"
             >
-              {currentView === View.Discovery && (
+              {currentView === View.TargetScraping && (
                 <DiscoveryView 
                   keyword={keyword}
                   setKeyword={setKeyword}
@@ -286,10 +286,10 @@ function DocumentationView() {
           <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 text-secondary rounded-xl flex items-center justify-center mb-4">
             <Search size={24} />
           </div>
-          <h3 className="text-xl font-serif font-bold text-primary">Academic Discovery</h3>
+          <h3 className="text-xl font-serif font-bold text-primary">Target Scraping</h3>
           <p className="text-sm text-on-surface-variant leading-relaxed">
-            The discovery layer leverages the <strong>OpenAlex API</strong> to traverse billions of academic entities. 
-            Simply enter keywords (e.g., "child development", "genomic sequencing") to retrieve a clean list of relevant works.
+            The target scraping layer leverages the <strong>OpenAlex API</strong> to traverse billions of academic entities. 
+            Supports multilingual queries—enter keywords in English or Mandarin (e.g., "抑郁", "睡眠") to retrieve relevant works.
           </p>
           <ul className="text-xs space-y-2 text-on-surface-variant list-disc pl-4">
             <li>Select individual papers or use 'Select All' for bulk extraction.</li>
@@ -352,7 +352,7 @@ function DiscoveryView({ keyword, setKeyword, isSearching, isExtracting, results
   return (
     <div className="max-w-5xl relative">
       <div className="mb-12">
-        <h2 className="text-4xl font-serif font-bold text-primary mb-4">Academic Discovery</h2>
+        <h2 className="text-4xl font-serif font-bold text-primary mb-4">Target Scraping</h2>
         <div className="flex gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" size={20} />
@@ -361,7 +361,7 @@ function DiscoveryView({ keyword, setKeyword, isSearching, isExtracting, results
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && onSearch()}
-              placeholder="Search via OpenAlex (e.g., 'cognitive neuroscience')..." 
+              placeholder="Search via OpenAlex (e.g., '抑郁', 'genomic sequencing')..." 
               className="w-full pl-12 pr-4 py-4 bg-surface-low border border-outline rounded-xl focus:ring-4 focus:ring-secondary/10 focus:border-secondary outline-none transition-all font-mono"
             />
           </div>
