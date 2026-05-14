@@ -39,26 +39,36 @@ function createWindow() {
     // PROD MODE: Spawn compiled PyInstaller executable
     console.log('App is Packaged. Spawning compiled binary...');
     
+    const isWin = process.platform === 'win32';
+    const binName = isWin ? 'sanjaya_api.exe' : 'sanjaya_api';
+
     // Check common production paths
     const possiblePaths = [
-      path.join(process.resourcesPath, 'sanjaya_api', 'sanjaya_api'), // Default electron-builder
-      path.join(process.resourcesPath, 'sanjaya_api'),
-      path.join(__dirname, '..', '..', 'backend', 'dist', 'sanjaya_api', 'sanjaya_api'), // Local simulation
+      path.join(process.resourcesPath, 'sanjaya_api', binName), // Default electron-builder (dir mode)
+      path.join(process.resourcesPath, binName), // One-file mode
+      path.join(__dirname, '..', '..', 'backend', 'dist', 'sanjaya_api', binName), // Local simulation
     ];
 
-    backendPath = possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
+    backendPath = possiblePaths.find(p => fs.existsSync(p));
+    
+    if (!backendPath) {
+      console.error('CRITICAL: Backend binary not found in any expected location.');
+      console.error('Searched paths:', possiblePaths);
+      backendPath = possiblePaths[0]; // Fallback to first guess
+    }
+
     cwd = path.dirname(backendPath);
 
-    console.log(`Executable Path: ${backendPath}`);
+    console.log(`Final Executable Path: ${backendPath}`);
     console.log(`CWD: ${cwd}`);
 
     pythonProcess = spawn(backendPath, ['--port', '8844'], { 
       cwd: cwd,
-      shell: process.platform === 'win32' // Required for some Windows environments
+      shell: isWin
     });
 
     pythonProcess.on('error', (err) => {
-      console.error('FAILED TO START BACKEND:', err);
+      console.error('ERROR: Failed to launch backend process:', err);
     });
 
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));

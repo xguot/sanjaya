@@ -59,7 +59,7 @@ export default function App() {
   const [backendReady, setBackendReady] = useState(false);
 
   useEffect(() => {
-    const checkBackend = async (retries = 5) => {
+    const checkBackend = async (retries = 12) => {
       for (let i = 0; i < retries; i++) {
         try {
           const res = await fetch('http://localhost:8844/health');
@@ -68,11 +68,11 @@ export default function App() {
             return;
           }
         } catch (e) {
-          console.log(`Backend not ready, retry ${i + 1}/${retries}...`);
+          console.log(`Backend not ready (attempt ${i + 1}/${retries})...`);
         }
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
-      setError("Engine failed to initialize. Please restart the application.");
+      setError("Engine failed to initialize after 24 seconds. Please check if a firewall is blocking port 8844 and restart.");
     };
     checkBackend();
   }, []);
