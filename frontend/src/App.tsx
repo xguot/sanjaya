@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { useState, useEffect, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 

@@ -1,6 +1,7 @@
 {
   "name": "sanjaya",
   "version": "1.0.0",
+  "type": "module",
   "description": "Sanjaya Academic Extraction Engine",
   "author": "Sanjaya Data",
   "repository": "https://github.com/xguot/sanjaya",
