@@ -87,8 +87,8 @@ def run_scrapy_spider(job_id: str, start_urls: List[str]):
         
         def check_completion():
             try:
-                # Wait for the result (blocks until done)
-                result.wait()
+                # Wait for the result (blocks until done, timeout required in seconds)
+                result.wait(timeout=600)
                 if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
                     jobs[job_id]["status"] = "completed"
                     jobs[job_id]["completed_at"] = datetime.datetime.now().isoformat()
