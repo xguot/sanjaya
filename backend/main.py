@@ -26,8 +26,15 @@ app.add_middleware(
 # In-memory job store
 jobs = {}
 
+import sys
+
 # Ensure data directory exists
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# [BUNDLING] Fix for PyInstaller _MEIPASS
+if getattr(sys, 'frozen', False):
+    BASE_DIR = sys._MEIPASS
+
 DATA_DIR = os.path.join(BASE_DIR, "data")
 if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
@@ -36,18 +43,29 @@ class UrlListPayload(BaseModel):
     urls: List[str]
 
 def run_scrapy_spider(job_id: str, start_urls: List[str]):
-    """Executes the Scrapy CLI command in an isolated subprocess."""
+    """Executes the Scrapy CLI command using the current python module."""
     jobs[job_id]["status"] = "processing"
     
     urls_str = ",".join(start_urls)
     output_file = os.path.join(DATA_DIR, f"{job_id}.csv")
     
-    # We run from the root directory where scrapy.cfg is located
-    # Path to venv/bin/scrapy relative to project root is ./venv/bin/scrapy
-    cmd = f"./venv/bin/scrapy crawl sanjaya -a start_urls='{urls_str}' -o {output_file}"
+    # Use sys.executable -m scrapy to ensure we use the bundled engine
+    # In dev mode, sys.executable is the venv python.
+    # In prod mode (PyInstaller), sys.executable is the bundled binary.
+    cmd = [
+        sys.executable, 
+        "-m", "scrapy", 
+        "crawl", "sanjaya", 
+        "-a", f"start_urls={urls_str}", 
+        "-o", output_file
+    ]
     
     try:
-        result = subprocess.run(cmd, shell=True, cwd=BASE_DIR, capture_output=True, text=True)
+        # Run subprocess with environment variables to ensure module discovery
+        env = os.environ.copy()
+        env["PYTHONPATH"] = BASE_DIR
+        
+        result = subprocess.run(cmd, cwd=BASE_DIR, capture_output=True, text=True, env=env)
         if result.returncode == 0:
             # Check if the output file exists and has content
             if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
