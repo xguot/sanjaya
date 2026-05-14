@@ -18,8 +18,23 @@
 
 @layer base {
   body {
-    @apply bg-background text-on-surface font-sans;
+    @apply bg-background text-on-surface font-sans transition-colors duration-300;
   }
+}
+
+/* [DARK MODE] System Overrides */
+.dark {
+  --color-background: #020617;
+  --color-surface-low: #0f172a;
+  --color-surface-high: #1e293b;
+  --color-outline: #334155;
+  --color-on-surface: #f1f5f9;
+  --color-on-surface-variant: #94a3b8;
+  --color-primary: #ffffff;
+}
+
+.dark body {
+  @apply bg-background text-on-surface;
 }
 
 @keyframes bounce-delay {
