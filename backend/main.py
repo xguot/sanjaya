@@ -10,7 +10,11 @@ import json
 import zipfile
 import httpx
 import datetime
+import sys
+import multiprocessing
 from typing import List, Optional
+from scrapy.crawler import CrawlerProcess
+from scrapy.utils.log import configure_logging
 
 app = FastAPI(title="Sanjaya API")
 
@@ -26,14 +30,17 @@ app.add_middleware(
 # In-memory job store
 jobs = {}
 
-import sys
-
 # Ensure data directory exists
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # [BUNDLING] Fix for PyInstaller _MEIPASS
 if getattr(sys, 'frozen', False):
     BASE_DIR = sys._MEIPASS
+
+if BASE_DIR not in sys.path:
+    sys.path.append(BASE_DIR)
+
+from sanjaya.spiders.sanjaya import SanjayaSpider
 
 DATA_DIR = os.path.join(BASE_DIR, "data")
 if not os.path.exists(DATA_DIR):
@@ -42,52 +49,72 @@ if not os.path.exists(DATA_DIR):
 class UrlListPayload(BaseModel):
     urls: List[str]
 
+# [ENGINEER CRITICAL] Scrapy Internalization
+def run_spider_internal(urls_str: str, output_file: str):
+    """Worker function to run Scrapy in a separate process."""
+    settings = {
+        'FEED_FORMAT': 'csv',
+        'FEED_URI': output_file,
+        'TWISTED_REACTOR': 'twisted.internet.asyncioreactor.AsyncioSelectorReactor',
+        'DOWNLOAD_HANDLERS': {
+            "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+            "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+        },
+        'PLAYWRIGHT_LAUNCH_OPTIONS': {"headless": True},
+        'LOG_LEVEL': 'INFO',
+        'REQUEST_FINGERPRINTER_IMPLEMENTATION': '2.7',
+    }
+    
+    configure_logging(settings)
+    process = CrawlerProcess(settings)
+    process.crawl(SanjayaSpider, start_urls=urls_str)
+    process.start() # This blocks until the spider is finished
+
 def run_scrapy_spider(job_id: str, start_urls: List[str]):
-    """Executes the Scrapy CLI command using the current python module."""
+    """Executes the Scrapy spider internally using multiprocessing."""
     jobs[job_id]["status"] = "processing"
     
     urls_str = ",".join(start_urls)
     output_file = os.path.join(DATA_DIR, f"{job_id}.csv")
     
-    # Use sys.executable -m scrapy to ensure we use the bundled engine
-    # In dev mode, sys.executable is the venv python.
-    # In prod mode (PyInstaller), sys.executable is the bundled binary.
-    cmd = [
-        sys.executable, 
-        "-m", "scrapy", 
-        "crawl", "sanjaya", 
-        "-a", f"start_urls={urls_str}", 
-        "-o", output_file
-    ]
-    
     try:
-        # Run subprocess with environment variables to ensure module discovery
-        env = os.environ.copy()
-        env["PYTHONPATH"] = BASE_DIR
+        # Use multiprocessing to avoid reactor issues in the main thread
+        p = multiprocessing.Process(target=run_spider_internal, args=(urls_str, output_file))
+        p.start()
+        p.join()
         
-        result = subprocess.run(cmd, cwd=BASE_DIR, capture_output=True, text=True, env=env)
-        if result.returncode == 0:
-            # Check if the output file exists and has content
+        if p.exitcode == 0:
             if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
                 jobs[job_id]["status"] = "completed"
                 jobs[job_id]["completed_at"] = datetime.datetime.now().isoformat()
             else:
                 jobs[job_id]["status"] = "failed"
-                jobs[job_id]["error"] = "Extraction finished but no content was found. The target pages might be protected or have unsupported structures."
+                jobs[job_id]["error"] = "Extraction finished but no content was found."
         else:
-            print(f"Scrapy Error: {result.stderr}")
             jobs[job_id]["status"] = "failed"
-            jobs[job_id]["error"] = result.stderr
+            jobs[job_id]["error"] = f"Scrapy process exited with code {p.exitcode}"
+            
     except Exception as e:
-        print(f"Subprocess Exception: {e}")
+        print(f"Scrapy Execution Exception: {e}")
         jobs[job_id]["status"] = "failed"
         jobs[job_id]["error"] = str(e)
+
+@app.on_event("startup")
+async def startup_event():
+    """Automate Playwright browser provisioning on first run."""
+    import subprocess
+    import sys
+    print("Verifying Playwright dependencies...")
+    try:
+        # Programmatically trigger the playwright install command
+        subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=True)
+        print("Playwright Chromium is ready.")
+    except Exception as e:
+        print(f"Auto-provisioning failed: {e}")
 
 @app.get("/api/discovery/openalex")
 async def discover_openalex(query: str = Query(..., min_length=1)):
     """Query OpenAlex for relevant papers."""
-    # OpenAlex uses 'per_page' instead of 'limit'
-    # Adding mailto is recommended for the 'polite' pool
     url = f"https://api.openalex.org/works?search={query}&per_page=50&mailto=sanjaya-app@example.com"
     async with httpx.AsyncClient(timeout=20.0) as client:
         try:
@@ -99,7 +126,6 @@ async def discover_openalex(query: str = Query(..., min_length=1)):
             data = response.json()
             results = []
             for work in data.get("results", []):
-                # Robustly handle nested Nones in the API response
                 primary_loc = work.get("primary_location") or {}
                 authorships = work.get("authorships") or []
                 
@@ -144,10 +170,8 @@ async def get_job_status(job_id: str):
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     
-    # Ensure job_id is included in the response
     job_response = {**job, "job_id": job_id}
     
-    # Add a preview if completed
     if job["status"] == "completed":
         csv_path = os.path.join(DATA_DIR, f"{job_id}.csv")
         preview = []
@@ -188,7 +212,6 @@ async def download_file(job_id: str, format: str = "csv"):
         zip_path = os.path.join(DATA_DIR, f"{job_id}.zip")
         manifest_path = os.path.join(DATA_DIR, f"{job_id}_manifest.txt")
         
-        # Create manifest
         job = jobs.get(job_id, {})
         with open(manifest_path, 'w', encoding='utf-8') as f:
             f.write("Sanjaya Extraction Audit Log\n")
@@ -210,6 +233,9 @@ async def download_file(job_id: str, format: str = "csv"):
         raise HTTPException(status_code=400, detail="Invalid format. Supported: csv, json, zip")
 
 if __name__ == "__main__":
+    # Required for PyInstaller + multiprocessing
+    multiprocessing.freeze_support()
+    
     import uvicorn
     import argparse
     
