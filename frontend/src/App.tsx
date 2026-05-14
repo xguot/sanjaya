@@ -39,7 +39,8 @@ interface ExtractionJob {
 enum View {
   Discovery = 'Discovery',
   Extraction = 'Extraction',
-  Export = 'Export'
+  Export = 'Export',
+  Documentation = 'Documentation'
 }
 
 const API_BASE = 'http://localhost:8000/api';
@@ -147,10 +148,34 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background">
-      <header className="h-16 flex-shrink-0 bg-white border-b border-outline px-8 flex items-center justify-between z-30">
+      <header className="h-16 flex-shrink-0 bg-white dark:bg-surface-low border-b border-outline px-8 flex items-center justify-between z-30 transition-colors">
         <div className="flex items-center gap-3">
           <Eye className="text-secondary" size={24} />
           <h1 className="text-2xl font-serif font-bold text-primary">Sanjaya</h1>
+        </div>
+        <div className="flex items-center gap-6">
+          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+            <button 
+              onClick={() => setCurrentView(View.Discovery)}
+              className={`${currentView === View.Discovery ? 'text-secondary' : 'text-on-surface-variant hover:text-primary'} transition-colors`}
+            >
+              Dashboard
+            </button>
+            <button 
+              onClick={() => setCurrentView(View.Documentation)}
+              className={`${currentView === View.Documentation ? 'text-secondary' : 'text-on-surface-variant hover:text-primary'} transition-colors`}
+            >
+              Documentation
+            </button>
+          </nav>
+          <div className="h-6 w-[1px] bg-outline hidden md:block"></div>
+          <button 
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className="p-2 rounded-xl bg-surface-low dark:bg-surface-high border border-outline hover:border-secondary transition-all text-on-surface-variant hover:text-secondary"
+            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
         </div>
       </header>
 
@@ -213,6 +238,9 @@ export default function App() {
               {currentView === View.Export && (
                 <ExportView job={job} activeJobId={activeJobId} />
               )}
+              {currentView === View.Documentation && (
+                <DocumentationView />
+              )}
             </motion.div>
           </AnimatePresence>
         </main>
@@ -244,6 +272,81 @@ function NavItem({ active, icon, label, onClick }: { active: boolean, icon: Reac
 }
 
 // --- View Components ---
+
+function DocumentationView() {
+  return (
+    <div className="max-w-5xl space-y-12 pb-24">
+      <div>
+        <h2 className="text-4xl font-serif font-bold text-primary mb-4">System Documentation</h2>
+        <p className="text-on-surface-variant text-lg">A researcher's guide to the Sanjaya extraction engine.</p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-8">
+        <section className="space-y-4 p-8 bg-surface-low dark:bg-surface-high rounded-2xl border border-outline">
+          <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 text-secondary rounded-xl flex items-center justify-center mb-4">
+            <Search size={24} />
+          </div>
+          <h3 className="text-xl font-serif font-bold text-primary">Academic Discovery</h3>
+          <p className="text-sm text-on-surface-variant leading-relaxed">
+            The discovery layer leverages the <strong>OpenAlex API</strong> to traverse billions of academic entities. 
+            Simply enter keywords (e.g., "child development", "genomic sequencing") to retrieve a clean list of relevant works.
+          </p>
+          <ul className="text-xs space-y-2 text-on-surface-variant list-disc pl-4">
+            <li>Select individual papers or use 'Select All' for bulk extraction.</li>
+            <li>Directly view DOIs and publication metadata before processing.</li>
+            <li>Initiate extraction immediately via the floating CTA bar.</li>
+          </ul>
+        </section>
+
+        <section className="space-y-4 p-8 bg-surface-low dark:bg-surface-high rounded-2xl border border-outline">
+          <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-xl flex items-center justify-center mb-4">
+            <Terminal size={24} />
+          </div>
+          <h3 className="text-xl font-serif font-bold text-primary">Extraction Protocol</h3>
+          <p className="text-sm text-on-surface-variant leading-relaxed">
+            Sanjaya uses a dual-pass extraction strategy to maximize data recovery from diverse academic publishers.
+          </p>
+          <ul className="text-xs space-y-2 text-on-surface-variant list-disc pl-4">
+            <li><strong>Static Pass:</strong> Fast, lightweight HTTP parsing for unprotected repositories.</li>
+            <li><strong>Dynamic Pass:</strong> Automated fallback to <strong>Playwright</strong> headless browsers for JS-heavy sites.</li>
+            <li><strong>Sniper Mode:</strong> Paste custom DOI/URLs directly for targeted extraction.</li>
+          </ul>
+        </section>
+      </div>
+
+      <div className="space-y-6">
+        <h3 className="text-2xl font-serif font-bold text-primary">Technical Stack: Python & Playwright</h3>
+        <div className="p-8 border border-outline rounded-2xl space-y-6">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-lg">
+              <Code size={20} />
+            </div>
+            <div>
+              <h4 className="font-bold text-primary mb-1">Scrapy-Playwright Integration</h4>
+              <p className="text-sm text-on-surface-variant leading-relaxed">
+                The engine is built on <strong>Scrapy</strong>. When a static parse fails, we initialize a 
+                <strong>Chromium</strong> instance via <strong>Playwright</strong> to wait for DOM stabilization and dynamic content rendering.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-lg">
+              <FileText size={20} />
+            </div>
+            <div>
+              <h4 className="font-bold text-primary mb-1">Audit Log & Manifest</h4>
+              <p className="text-sm text-on-surface-variant leading-relaxed">
+                To ensure research reproducibility, every ZIP export includes an automated <strong>manifest.txt</strong>. 
+                This log captures the timestamp, Job ID, and the source URLs used in the session.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function DiscoveryView({ keyword, setKeyword, isSearching, isExtracting, results, selectedUrls, onSearch, onToggle, onSelectAll, onClear, onExtract }: any) {
   return (
