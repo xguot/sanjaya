@@ -16,7 +16,8 @@ import {
   Loader2,
   Menu,
   X,
-  BookOpen
+  BookOpen,
+  Github
 } from 'lucide-react';
 
 // [TYPES] Core data structures
@@ -177,6 +178,15 @@ export default function App() {
               Docs
             </button>
           </nav>
+          <a 
+            href="https://github.com/xguot/sanjaya" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-slate-500 hover:text-slate-800 transition-colors"
+            aria-label="GitHub Repository"
+          >
+            <Github size={20} />
+          </a>
         </div>
       </header>
 
