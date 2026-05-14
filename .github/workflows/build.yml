@@ -33,7 +33,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install Frontend Dependencies
         run: |
@@ -56,4 +56,6 @@ jobs:
             frontend/dist/*.dmg
             frontend/dist_electron/*.exe
             frontend/dist_electron/*.dmg
+          retention-days: 7
+/dist_electron/*.dmg
           retention-days: 7
