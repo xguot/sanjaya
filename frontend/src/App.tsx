@@ -44,8 +44,10 @@ enum View {
   Documentation = 'Documentation'
 }
 
-const RAW_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
-const API_BASE = RAW_BASE.endsWith('/api') ? RAW_BASE : `${RAW_BASE.replace(/\/$/, '')}/api`;
+const RAW_BASE = (import.meta.env.VITE_API_BASE || 'http://localhost:8000').replace(/\/$/, '');
+const API_BASE = RAW_BASE.endsWith('/api') ? RAW_BASE : `${RAW_BASE}/api`;
+
+console.log('Sanjaya API Base:', API_BASE);
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>(View.TargetScraping);
